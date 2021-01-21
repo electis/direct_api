@@ -1,12 +1,25 @@
 from pydantic import BaseModel
+from typing import Optional
 
 import uvicorn
-from fastapi import FastAPI
-from typing import Optional
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 import social
 
 app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+tokens = {'test', 'test2'}
+
+def auth(token: str = Depends(oauth2_scheme)):
+    if token in tokens:
+        return True
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 class Social(BaseModel):
@@ -20,9 +33,9 @@ class Result(BaseModel):
     result: Optional[str]
     error: Optional[str]
 
-# TODO auth
+
 @app.post("/social", response_model=Result)
-def social_view(request: Social):
+def social_view(request: Social, is_auth: bool = Depends(auth)):
     service = getattr(social, request.service)()
     result = Result()
     try:
@@ -30,6 +43,11 @@ def social_view(request: Social):
     except Exception as exc:
         result.error = str(exc)
     return result
+
+
+@app.get("/items/")
+async def read_items(token: str = Depends(auth)):
+    return {"token": token}
 
 
 if __name__ == "__main__":
