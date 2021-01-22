@@ -25,7 +25,7 @@ def auth(token: str = Depends(oauth2_scheme)):
 class Social(BaseModel):
     service: social.SERVICES
     user_data: social.UserData
-    service_data: social.ServiceData
+    service_data: Optional[social.ServiceData]
     message: social.Message
 
 

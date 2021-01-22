@@ -56,6 +56,7 @@ class ServiceFactory(ABC):
 
 
 class VK(ServiceFactory):
+    # TODO подгружать фото на вк, а не атачем. Сделать видео.
     def post(self, message: Message, user_data: UserData, service_data: ServiceData = None) -> Union[int, str, None]:
         vk_session = vk_api.VkApi(token=user_data.token)
         owner_id = user_data.owner_id
@@ -148,3 +149,32 @@ class OK(ServiceFactory):
 
     def auth(self, login, password) -> str:
         pass
+
+
+class OK_2(ServiceFactory):
+    def post(self, message: Message, user_data: UserData, service_data: ServiceData) -> Union[int, str, None]:
+        url = 'https://api.ok.ru/api/'
+        application_key = service_data.application_key
+        application_secret_key = service_data.application_secret_key
+        access_token = service_data.access_token
+        params = {}
+        sig = self.get_sig(params, application_secret_key=application_secret_key, access_token=access_token)
+        test = requests.get(f'{url}me/messages/chat')
+        return
+
+    def auth(self, login, password) -> str:
+        pass
+
+    @staticmethod
+    def get_sig(params, session_secret_key=None, session=False, application_secret_key=None, access_token=None):
+        from hashlib import md5
+        if not session_secret_key:
+            if not session:
+                session_secret_key = application_secret_key
+            else:
+                session_secret_key = str(md5(access_token + application_secret_key)).lower()
+        exclude_keys = {'session_key', 'access_token'}
+        params = ''.join(['{}={}'.format(key, params[key])
+                          for key in sorted(params.keys()) if not key in exclude_keys])
+        sig = md5('{}{}'.format(params, session_secret_key).encode('utf-8')).hexdigest().lower()
+        return sig
