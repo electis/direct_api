@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -24,8 +24,7 @@ def auth(token: str = Depends(oauth2_scheme)):
 
 class Social(BaseModel):
     service: social.SERVICES
-    user_data: social.UserData
-    service_data: Optional[social.ServiceData]
+    data: Union[social.OKData, social.VKData]
     message: social.Message
 
 
@@ -39,7 +38,7 @@ def social_view(request: Social, is_auth: bool = Depends(auth)):
     service = getattr(social, request.service)()
     result = Result()
     try:
-        result.result = service.post(request.message, request.user_data, request.service_data)
+        result.result = service.post(request.message, request.data)
     except Exception as exc:
         result.error = str(exc)
     return result
