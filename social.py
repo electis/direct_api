@@ -94,14 +94,19 @@ class VK(ServiceFactory):
 
 class OK(ServiceFactory):
     def post(self, message: Message, data: OKData) -> Union[int, str, None]:
-        # url = 'https://api.ok.ru/api'
+        # TODO pict
         url = 'https://api.ok.ru/fb.do'
         application_secret_key = data.application_secret_key
         access_token = data.access_token
-        media = [{"type": "text", "text": "wqe"}]
+        media = []
+        if message.text:
+            media.append(dict(
+                type='text',
+                text=message.text
+            ))
         params = {
             "application_key": data.application_key,
-            "attachment": {"media": media},
+            "attachment": json.dumps({"media": media}),
             "gid": data.gid,
             "method": "mediatopic.post",
             "type": "GROUP_THEME",
@@ -123,9 +128,8 @@ class OK(ServiceFactory):
             else:
                 session_secret_key = md5(f"{access_token}{application_secret_key}".encode('utf-8')).hexdigest().lower()
         exclude_keys = {'session_key', 'access_token'}
-        params_str = ''.join([f'{key}={params[key] if isinstance(params[key], str) else json.dumps(params[key])}'
+        params_str = ''.join([f'{key}={params[key]}'
                               for key in sorted(params.keys()) if not key in exclude_keys])
         params_str += session_secret_key
         sig = md5(params_str.encode('utf-8')).hexdigest().lower()
-        # TODO не правильный sig
         return sig
