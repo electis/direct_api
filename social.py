@@ -93,9 +93,10 @@ class VK(ServiceFactory):
 
 
 class OK(ServiceFactory):
+    api_url = 'https://api.ok.ru/fb.do'
+
     def post(self, message: Message, data: OKData) -> Union[int, str, None]:
         # TODO pict
-        url = 'https://api.ok.ru/fb.do'
         application_secret_key = data.application_secret_key
         access_token = data.access_token
         media = []
@@ -104,6 +105,8 @@ class OK(ServiceFactory):
                 type='text',
                 text=message.text
             ))
+        if message.pict:
+            media.append(self.load_image(message.pict))
         params = {
             "application_key": data.application_key,
             "attachment": json.dumps({"media": media}),
@@ -114,11 +117,31 @@ class OK(ServiceFactory):
         }
         sig = self.get_sig(params, application_secret_key=application_secret_key, access_token=access_token)
         params['sig'] = sig
-        test = requests.post(url, data=params)
-        return f'{test.status_code} {test.text}'
+        del params['method']
+        test = self.call("mediatopic.post", **params)
+        # test = requests.post(self.api_url, data=params)
+        return test
 
     def auth(self, login, password) -> str:
         pass
+
+    def load_image(self, image_url):
+        url = self.call("photosV2.getUploadUrl", count=1)
+        response = requests.post(url, data=dict(image=image_url))
+        if response.status_code == 200:
+            key, token = response.json()['photos'].items()[0]
+            self.call("photosV2.commit", photo_id=key, token=token)
+        else:
+            token = None
+        return token
+
+    def call(self, method: str, **params):
+        params['method'] = method
+        response = requests.post(self.api_url, data=params)
+        if response.status_code == 200:
+            return response.text
+        else:
+            return False
 
     @staticmethod
     def get_sig(params: dict, session_secret_key=None, session=True, application_secret_key=None, access_token=None):
