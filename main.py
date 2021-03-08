@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, Union
 
 import uvicorn
+import youtube_dl
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
@@ -11,6 +12,7 @@ app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 tokens = {'test', 'test2'}
+
 
 def auth(token: str = Depends(oauth2_scheme)):
     if token in tokens:
@@ -22,6 +24,10 @@ def auth(token: str = Depends(oauth2_scheme)):
     )
 
 
+class Youtube(BaseModel):
+    y_id: str
+
+
 class Social(BaseModel):
     service: social.SERVICES
     data: Union[social.OKData, social.VKData]
@@ -31,6 +37,26 @@ class Social(BaseModel):
 class Result(BaseModel):
     result: Optional[str]
     error: Optional[str]
+
+
+@app.post("/youtube", response_model=Result)
+def youtube(request: Youtube, is_auth: bool = Depends(auth)):
+    ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+    with ydl:
+        result = ydl.extract_info(
+            f'http://www.youtube.com/watch?v={request.y_id}',
+            download=False  # We just want to extract the info
+        )
+    if 'entries' in result:
+        # Can be a playlist or a list of videos
+        video = result['entries'][0]
+    else:
+        # Just a video
+        video = result
+
+    print(video)
+    video_url = video['url']
+    print(video_url)
 
 
 @app.post("/social", response_model=Result)
