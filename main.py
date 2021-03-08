@@ -41,12 +41,16 @@ class Result(BaseModel):
 
 @app.post("/youtube", response_model=Result)
 def youtube(request: Youtube, is_auth: bool = Depends(auth)):
+    result = Result()
+    # check id
     ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
     with ydl:
-        result = ydl.extract_info(
-            f'http://www.youtube.com/watch?v={request.y_id}',
-            download=False  # We just want to extract the info
-        )
+        try:
+            result = ydl.extract_info(f'http://www.youtube.com/watch?v={request.y_id}',
+                                      download=False)  # We just want to extract the info
+        except youtube_dl.utils.DownloadError as exc:
+            result.error = str(exc)
+            return result
     if 'entries' in result:
         # Can be a playlist or a list of videos
         video = result['entries'][0]
