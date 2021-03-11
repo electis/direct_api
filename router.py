@@ -13,7 +13,7 @@ def youtube(request: models.Youtube):
     result = models.Result()
     try:
         if request.download:
-            pass
+            result.data = service.download(request.format)
         else:
             result.data = service.info()
     except Exception as exc:

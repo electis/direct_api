@@ -19,7 +19,7 @@ class OKData(BaseModel):
 
 class Youtube(BaseModel):
     y_id: str
-    format: Optional[str]
+    format: Optional[str] = None
     download: Optional[bool] = False
 
 
