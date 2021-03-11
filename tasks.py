@@ -1,3 +1,5 @@
+import os
+
 import redis
 import youtube_dl
 from celery import Celery
@@ -21,10 +23,13 @@ def my_hook(d):
     r = redis.Redis(db=1)
     filename = d['filename'].split('.')[0]
     redis_name = f'youtube_download_{filename}'
-    if d['status'] == 'downloading':
+    if d['status'] == 'error':
+        r.set(redis_name, 'download error')
+    elif d['status'] == 'downloading':
         r.set(redis_name, d.get('_percent_str', '0').strip())
-    if d['status'] == 'finished':
+    elif d['status'] == 'finished':
         r.set(redis_name, 100)
+
 
 @app.task(ignore_result=True)
 def youtube_download(y_id, format):
@@ -50,6 +55,7 @@ def youtube_download(y_id, format):
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }
+    os.chdir(settings.DOWNLOAD_PATH)
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         try:
             ydl.download([url])
