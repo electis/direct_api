@@ -12,38 +12,19 @@ class YouTube(object):
         self.y_id = y_id
         self.url = f'http://www.youtube.com/watch?v={y_id}'
 
-    def check_status(self, format):
-        filename = f"{self.y_id}_{format}"
-        try:
-            size = os.path.getsize(f'{filename}.mp4')
-        except FileNotFoundError:
-            return "0"
-        video = self.extract_info()
-        video_size = 0
-        for f in video['formats']:
-            if f['format_id'] == format:
-                video_size = f['filesize']
-        if not video_size:
-            return None
-        return size / video_size * 100
-
     def download(self, format):
         filename = f"{self.y_id}_{format}"
         redis_name = f'youtube_download_{filename}'
         data = dict()
 
-        r = redis.Redis()
+        r = redis.Redis(db=1)
         status = r.get(redis_name)
 
         if status is None:
             tasks.youtube_download(self.y_id, format)
-        else:
-            if status == b'100':
-                download_url = f'http://youtube.electis.ru/download/{filename}.mp4'
-                data['url'] = download_url
-            # else:
-            #     status = self.check_status(format)
-
+        elif status == b'100':
+            download_url = f'http://youtube.electis.ru/download/{filename}.mp4'
+            data['url'] = download_url
         data['status'] = status
         return data
 

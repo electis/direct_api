@@ -4,7 +4,7 @@ from celery import Celery
 
 import settings
 
-app = Celery('direct_api', broker=settings.broker)
+app = Celery('direct_api', broker=settings.REDIS)
 
 
 class MyLogger(object):
@@ -18,7 +18,7 @@ class MyLogger(object):
         print('error', msg)
 
 def my_hook(d):
-    r = redis.Redis()
+    r = redis.Redis(db=1)
     filename = d['filename'].split('.')[0]
     redis_name = f'youtube_download_{filename}'
     if d['status'] == 'downloading':
@@ -30,7 +30,7 @@ def my_hook(d):
 def youtube_download(y_id, format):
     filename = f"{y_id}_{format}"
     redis_name = f'youtube_download_{filename}'
-    r = redis.Redis()
+    r = redis.Redis(db=1)
     status = r.get(redis_name)
     if status:
         # check for task?
