@@ -1,41 +1,32 @@
-import youtube_dl
-
-import social
-from models import Result, Social, Youtube
-
 from fastapi import APIRouter
+
+import models
+import social
+from youtube import YouTube
 
 api_router = APIRouter()
 
 
-@api_router.post("/youtube", response_model=Result)
-def youtube(request: Youtube):
-    result = Result()
-    # check id
-    ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-    with ydl:
-        try:
-            result = ydl.extract_info(f'http://www.youtube.com/watch?v={request.y_id}',
-                                      download=False)  # We just want to extract the info
-        except youtube_dl.utils.DownloadError as exc:
-            result.error = str(exc)
-            return result
-    if 'entries' in result:
-        # Can be a playlist or a list of videos
-        video = result['entries'][0]
+@api_router.post("/youtube/", response_model=models.Result)
+def youtube(request: models.Youtube):
+    service = YouTube(request.y_id)
+    result = models.Result()
+    try:
+        if request.download:
+            pass
+        else:
+            result.data = service.info()
+    except Exception as exc:
+        result.error = str(exc)
     else:
-        # Just a video
-        video = result
-
-    print(video)
-    video_url = video['url']
-    print(video_url)
+        result.result = 'OK'
+    return result
 
 
-@api_router.post("/social", response_model=Result)
-def social_view(request: Social):
+@api_router.post("/social", response_model=models.Result)
+def social_view(request: models.Social):
     service = getattr(social, request.service)()
-    result = Result()
+    result = models.Result()
     try:
         result.result = service.post(request.message, request.data)
     except Exception as exc:

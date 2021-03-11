@@ -19,6 +19,8 @@ class OKData(BaseModel):
 
 class Youtube(BaseModel):
     y_id: str
+    format: Optional[str]
+    download: Optional[bool] = False
 
 
 class VKData(BaseModel):
@@ -35,3 +37,4 @@ class Social(BaseModel):
 class Result(BaseModel):
     result: Optional[str]
     error: Optional[str]
+    data: Optional[dict]
