@@ -4,36 +4,17 @@ social services, class name = service name, methods: post, ...
 import json
 from hashlib import md5
 from abc import ABC, abstractmethod
-from pydantic import BaseModel
-from typing import Union, Literal, Optional
+from typing import Union
 
 import requests
 import vk_api
 
-SERVICES = Literal['VK', 'OK']
+from models import Message, VKData, OKData
 
 
 def url_exists(path) -> Union[bool, str]:
     r = requests.head(path)
     return r.status_code == requests.codes.ok
-
-
-class Message(BaseModel):
-    text: Optional[str]
-    pict: Optional[str]
-
-
-class OKData(BaseModel):
-    access_token: str
-    gid: str
-    application_id: str
-    application_key: str
-    application_secret_key: str
-
-
-class VKData(BaseModel):
-    token: str
-    owner_id: str
 
 
 class ServiceFactory(ABC):
