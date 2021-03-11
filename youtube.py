@@ -14,14 +14,17 @@ class YouTube(object):
 
     def check_status(self, format):
         filename = f"{self.y_id}_{format}"
-        size = os.path.getsize(filename)
+        try:
+            size = os.path.getsize(f'{filename}.mp4')
+        except FileNotFoundError:
+            return "0"
         video = self.extract_info()
         video_size = 0
         for f in video['formats']:
             if f['format_id'] == format:
                 video_size = f['filesize']
         if not video_size:
-            return 0
+            return None
         return size / video_size * 100
 
     def download(self, format):
@@ -33,21 +36,20 @@ class YouTube(object):
         status = r.get(redis_name)
 
         if status is None:
-            tasks.youtube_download.delay(self.y_id, format)
+            tasks.youtube_download(self.y_id, format)
         else:
-            if status == 100:
-                download_url = f'http://youtube.electis.ru/download/{self.y_id}'
+            if status == b'100':
+                download_url = f'http://youtube.electis.ru/download/{filename}.mp4'
                 data['url'] = download_url
-            else:
-                status = self.check_status(format)
+            # else:
+            #     status = self.check_status(format)
 
         data['status'] = status
         return data
 
     def extract_info(self):
         # TODO cache something
-        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-        with ydl:
+        with youtube_dl.YoutubeDL() as ydl:
             try:
                 video = ydl.extract_info(self.url, download=False)
             except youtube_dl.utils.DownloadError as exc:
@@ -59,7 +61,7 @@ class YouTube(object):
     def info(self):
         video = self.extract_info()
 
-        criteria = lambda f: bool(f['asr'] and f['fps'])  # with audio
+        criteria = lambda f: bool(f.get('asr') and f['fps'])  # with audio
 
         formats = {f['format_id']: [f['format_note'], f['vcodec']]
                    for f in video['formats']
@@ -73,3 +75,10 @@ class YouTube(object):
             formats=formats
         )
         return data
+
+    def clear(self):
+        filename = f"{self.y_id}_{format}"
+        os.remove(filename)
+        redis_name = f'youtube_download_{filename}'
+        r = redis.Redis()
+        r.delete(redis_name)
