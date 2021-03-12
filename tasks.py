@@ -6,7 +6,6 @@ import youtube_dl
 
 import settings
 
-# app = Celery('direct_api', broker=settings.REDIS)
 redis_con = redis.Redis(db=settings.REDIS_DB)
 
 
@@ -33,7 +32,6 @@ def my_hook(d):
         redis_con.set(redis_name, 100)
 
 
-# @app.task(ignore_result=True)
 def youtube_download(y_id, format):
     filename = f"{y_id}_{format}"
     redis_name = f'youtube_download_{filename}'
@@ -51,8 +49,8 @@ def youtube_download(y_id, format):
         #     'preferredcodec': 'mp3',
         #     'preferredquality': '192',
         # }],
-        'format': format,
-        'outtmpl': f'{filename}.mp4',
+        'format': f'{format}+bestaudio',
+        'outtmpl': f'{filename}',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }

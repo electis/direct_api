@@ -17,15 +17,21 @@ class YouTube(object):
         redis_name = f'youtube_download_{filename}'
         data = dict()
 
-        if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.mp4')):
+        filename_ext = None
+        for ext in ['mkv', 'mp4']:
+            if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')):
+                filename_ext = f'{filename}.{ext}'
+                break
+
+        if filename_ext:
             status = 100
-            download_url = f'{settings.DOWNLOAD_URL}{filename}.mp4'
+            download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
             data['url'] = download_url
         else:
             status = redis_con.get(redis_name)
             if status is None:
                 background_tasks.add_task(youtube_download, self.y_id, format)
-                # youtube_download.delay(self.y_id, format)
+                # youtube_download(self.y_id, format)
 
         data['status'] = status
         return data
@@ -44,8 +50,10 @@ class YouTube(object):
     def info(self, format=None):
         video = self.extract_info()
 
-        criteria = lambda f: bool(f.get('asr') and f['fps'])  # with audio
-        formats = {f['format_id']: [f['format_note'], f['vcodec']]
+        criteria = lambda f: (((f.get('asr') and f['fps'])
+                               or ((f.get('height') or 0) > 720))
+                              and (f.get('container') != 'webm_dash'))
+        formats = {f['format_id']: [f['format_note']]
                    for f in video['formats']
                    if criteria(f)}
 
@@ -59,9 +67,14 @@ class YouTube(object):
         )
         if format:
             filename = f"{self.y_id}_{format}"
-            if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.mp4')):
+            filename_ext = None
+            for ext in ['mkv', 'mp4']:
+                if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')):
+                    filename_ext = f'{filename}.{ext}'
+                    break
+            if filename_ext:
                 status = 100
-                download_url = f'{settings.DOWNLOAD_URL}{filename}.mp4'
+                download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
                 data['url'] = download_url
             else:
                 redis_name = f'youtube_download_{filename}'
