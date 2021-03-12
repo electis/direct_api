@@ -24,7 +24,7 @@ class YouTube(object):
         else:
             status = redis_con.get(redis_name)
             if status is None:
-                youtube_download(self.y_id, format)
+                youtube_download.delay(self.y_id, format)
 
         data['status'] = status
         return data
