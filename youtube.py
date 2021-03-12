@@ -50,9 +50,9 @@ class YouTube(object):
     def info(self, format=None):
         video = self.extract_info()
 
-        criteria = lambda f: (((f.get('asr') and f['fps'])
-                               or ((f.get('height') or 0) > 720))
-                              and (f.get('container') != 'webm_dash'))
+        criteria = lambda f: (((f.get('asr') and f['fps'])  # with audio
+                               or ((f.get('height') or 0) > 720))  # high quality
+                              and (f.get('container') != 'webm_dash'))  # no webm
         formats = {f['format_id']: [f['format_note']]
                    for f in video['formats']
                    if criteria(f)}

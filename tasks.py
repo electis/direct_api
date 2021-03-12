@@ -53,6 +53,7 @@ def youtube_download(y_id, format):
         'outtmpl': f'{filename}',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
+        'merge_output_format': 'mp4'
     }
     os.chdir(settings.DOWNLOAD_PATH)
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
