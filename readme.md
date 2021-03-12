@@ -4,8 +4,7 @@
 
 ```
 sudo ln -s /www/direct_api/etc/supervisor.conf /etc/supervisor/conf.d/direct_api.conf
-sudo supervisorctl reread
-sudo supervisorctl update
+sudo supervisorctl reread && sudo supervisorctl update
 ```
 
 Добавляем конфиг nginx:
