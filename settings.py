@@ -1,9 +1,15 @@
 import os
 
-TG_API_URL = 'https://api.telegram.org'
+from dotenv import load_dotenv
 
-SECRET_TOKEN = os.getenv('SECRET_TOKEN', 'not_secure')
+load_dotenv()
+
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'dev')
+SECRET_TOKEN = os.getenv('SECRET_TOKEN', 'not_secure')
+if ENVIRONMENT == 'production':
+    assert SECRET_TOKEN != 'not_secure', 'Token not secure'
 
-REDIS = 'redis://localhost:6379/1'
-DOWNLOAD_PATH = '/storage/youtube'
+REDIS = os.getenv('REDIS', 'redis://localhost:6379/1')
+REDIS_DB = int(os.getenv('REDIS_DB', '1'))
+
+DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH', '/storage/youtube')

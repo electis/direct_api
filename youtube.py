@@ -1,9 +1,9 @@
 import os
 
-import redis
 import youtube_dl
 
-import tasks
+import settings
+from tasks import youtube_download, redis_con
 
 
 class YouTube(object):
@@ -17,14 +17,15 @@ class YouTube(object):
         redis_name = f'youtube_download_{filename}'
         data = dict()
 
-        r = redis.Redis(db=1)
-        status = r.get(redis_name)
-
-        if status is None:
-            tasks.youtube_download(self.y_id, format)
-        elif status == b'100':
+        if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, filename)):
+            status = 100
             download_url = f'http://youtube.electis.ru/download/{filename}.mp4'
             data['url'] = download_url
+        else:
+            status = redis_con.get(redis_name)
+            if status is None:
+                youtube_download(self.y_id, format)
+
         data['status'] = status
         return data
 
@@ -61,5 +62,4 @@ class YouTube(object):
         filename = f"{self.y_id}_{format}"
         os.remove(filename)
         redis_name = f'youtube_download_{filename}'
-        r = redis.Redis()
-        r.delete(redis_name)
+        redis_con.delete(redis_name)

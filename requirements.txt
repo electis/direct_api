@@ -5,3 +5,4 @@ vk-api==11.9.1
 youtube_dl==2021.3.3
 celery==5.0.5
 redis==3.5.3
+python-dotenv==0.15.0
