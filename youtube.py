@@ -19,7 +19,7 @@ class YouTube(object):
 
         if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.mp4')):
             status = 100
-            download_url = f'http://youtube.electis.ru/download/{filename}.mp4'
+            download_url = f'http://direct.electis.ru/download/{filename}.mp4'
             data['url'] = download_url
         else:
             status = redis_con.get(redis_name)
