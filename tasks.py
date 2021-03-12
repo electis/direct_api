@@ -12,7 +12,8 @@ redis_con = redis.Redis(db=settings.REDIS_DB)
 
 class MyLogger(object):
     def debug(self, msg):
-        print('debug', msg)
+        # print('debug', msg)
+        pass
 
     def warning(self, msg):
         print('warning', msg)
