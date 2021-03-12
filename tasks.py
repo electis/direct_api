@@ -2,11 +2,11 @@ import os
 
 import redis
 import youtube_dl
-from celery import Celery
+# from celery import Celery
 
 import settings
 
-app = Celery('direct_api', broker=settings.REDIS)
+# app = Celery('direct_api', broker=settings.REDIS)
 redis_con = redis.Redis(db=settings.REDIS_DB)
 
 
@@ -32,7 +32,7 @@ def my_hook(d):
         redis_con.set(redis_name, 100)
 
 
-@app.task(ignore_result=True)
+# @app.task(ignore_result=True)
 def youtube_download(y_id, format):
     filename = f"{y_id}_{format}"
     redis_name = f'youtube_download_{filename}'

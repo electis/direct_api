@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 
 import models
 import social
@@ -8,14 +8,14 @@ api_router = APIRouter()
 
 
 @api_router.post("/youtube/", response_model=models.Result)
-def youtube(request: models.Youtube):
+async def youtube(request: models.Youtube, background_tasks: BackgroundTasks):
     service = YouTube(request.y_id)
     result = models.Result()
     try:
         if request.download:
-            result.data = service.download(request.format)
+            result.data = service.download(request.format, background_tasks)
         else:
-            result.data = service.info()
+            result.data = service.info(request.format)
     except Exception as exc:
         result.error = str(exc)
     else:
