@@ -27,7 +27,8 @@ def my_hook(d):
     if d['status'] == 'error':
         redis_con.set(redis_name, 'download error')
     elif d['status'] == 'downloading':
-        redis_con.set(redis_name, d.get('_percent_str', '0').strip())
+        status = int(float(d.get('_percent_str', '0').strip('%')))
+        redis_con.set(redis_name, status)
     elif d['status'] == 'finished':
         redis_con.set(redis_name, 100)
 
@@ -37,7 +38,7 @@ def youtube_download(y_id, format):
     redis_name = f'youtube_download_{filename}'
     status = redis_con.get(redis_name)
     if status:
-        # check for task?
+        print('Already running?')
         return
 
     redis_con.set(redis_name, 0)
@@ -50,7 +51,8 @@ def youtube_download(y_id, format):
         #     'preferredquality': '192',
         # }],
         'format': f'{format}+bestaudio',
-        'outtmpl': f'{filename}',
+        'outtmpl': f'{filename}.mp4',
+        'output': f'{filename}.%(ext)s',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
         'merge_output_format': 'mp4'
@@ -59,6 +61,6 @@ def youtube_download(y_id, format):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         try:
             ydl.download([url])
-        except youtube_dl.utils.DownloadError as exc:
+        except youtube_dl.utils.DownloadError:
             raise
-    redis_con.set(redis_name, 100)
+    redis_con.delete(redis_name)

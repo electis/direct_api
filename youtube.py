@@ -1,4 +1,5 @@
 import os
+import json
 
 import youtube_dl
 
@@ -32,12 +33,16 @@ class YouTube(object):
             if status is None:
                 background_tasks.add_task(youtube_download, self.y_id, format)
                 # youtube_download(self.y_id, format)
+            else:
+                status = int(status)
 
         data['status'] = status
         return data
 
     def extract_info(self):
-        # TODO cache something
+        video = redis_con.get(f'youtube_info_{self.y_id}')
+        if video:
+            return json.loads(video)
         with youtube_dl.YoutubeDL() as ydl:
             try:
                 video = ydl.extract_info(self.url, download=False)
@@ -45,6 +50,7 @@ class YouTube(object):
                 raise
         if 'entries' in video:
             video = video['entries'][0]  # Can be a playlist or a list of videos
+        redis_con.set(f'youtube_info_{self.y_id}', json.dumps(video))
         return video
 
     def info(self, format=None):
