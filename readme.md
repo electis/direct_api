@@ -1,3 +1,9 @@
+### Установка
+
+```
+sudo apt install ffmpeg
+```
+
 ### Конфиги
 
 Добавляем конфиг supervisor:
