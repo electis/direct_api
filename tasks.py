@@ -1,12 +1,9 @@
 import os
 
-import redis
 import youtube_dl
-# from celery import Celery
 
 import settings
-
-redis_con = redis.Redis(db=settings.REDIS_DB)
+from utils import cache
 
 
 class MyLogger(object):
@@ -22,26 +19,27 @@ class MyLogger(object):
 
 
 def my_hook(d):
-    filename = d['filename'].split('.')[0]
-    redis_name = f'youtube_download_{filename}'
+    y_id = ...
+    format = ...
+    name = f'youtube_{y_id}'
     if d['status'] == 'error':
-        redis_con.set(redis_name, 'download error')
+        cache.mset(name, format, 'error', 'DownloadError')
     elif d['status'] == 'downloading':
         status = int(float(d.get('_percent_str', '0').strip('%')))
-        redis_con.set(redis_name, status)
+        cache.mset(name, format, 'status', status)
     elif d['status'] == 'finished':
-        redis_con.set(redis_name, 100)
+        cache.mset(name, format, 'status', 100)
+        cache.mset(name, format, 'filename', ...)
 
 
-def youtube_download(y_id, format):
+def youtube_download(y_id, format, name):
     filename = f"{y_id}_{format}"
-    redis_name = f'youtube_download_{filename}'
-    status = redis_con.get(redis_name)
+    status = cache.mget(name, format, 'status')
     if status:
         print('Already running?')
         return
 
-    redis_con.set(redis_name, 0)
+    cache.mset(name, format, 'status', 0)
     url = f'http://www.youtube.com/watch?v={y_id}'
     ydl_opts = {
         # 'format': 'bestaudio/best',
@@ -62,5 +60,5 @@ def youtube_download(y_id, format):
         try:
             ydl.download([url])
         except youtube_dl.utils.DownloadError:
+            cache.mset(name, format, 'error', 'DownloadError')
             raise
-    redis_con.delete(redis_name)

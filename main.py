@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 import settings
 from router import api_router
 
-from tasks import redis_con
+from utils import cache
 
 docs_kwargs = {}
 if settings.ENVIRONMENT == 'production':
@@ -28,6 +28,6 @@ app.include_router(api_router, dependencies=[Depends(auth)])
 
 
 if __name__ == "__main__":
-    for key in redis_con.scan_iter("youtube_*"):
-        redis_con.delete(key)
+    for key in cache.scan_iter("youtube_*"):  # TODO test scan_iter
+        cache.delete(key)
     uvicorn.run(app, host="0.0.0.0", port=8000)
