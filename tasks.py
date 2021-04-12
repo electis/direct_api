@@ -51,8 +51,8 @@ def youtube_download(y_id, format):
         #     'preferredquality': '192',
         # }],
         'format': f'{format}+bestaudio',
-        'outtmpl': f'{filename}.mp4',
-        'output': f'{filename}.%(ext)s',
+        'outtmpl': f'{filename}',
+        # 'output': f'{filename}.%(ext)s',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
         'merge_output_format': 'mp4'
