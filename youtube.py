@@ -12,7 +12,7 @@ class YouTube(object):
     def __init__(self, y_id):
         self.y_id = y_id
         self.url = f'http://www.youtube.com/watch?v={y_id}'
-        self.name = f'youtube_{y_id}'
+        self.name = f'youtube.{y_id}'
 
     def download(self, format, background_tasks):
         filename = f"{self.y_id}_{format}"
@@ -30,8 +30,8 @@ class YouTube(object):
         else:
             status = cache.sget(self.name, format, 'status')
             if status is None:
-                background_tasks.add_task(youtube_download, self.y_id, format, self.name)
-                # youtube_download(self.y_id, format)
+                # background_tasks.add_task(youtube_download, self.y_id, format, self.name)
+                youtube_download(self.y_id, format, self.name)
         data['status'] = status
         return data
 

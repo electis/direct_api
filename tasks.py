@@ -19,9 +19,9 @@ class MyLogger(object):
 
 
 def my_hook(d):
-    y_id = ...
-    format = ...
-    name = f'youtube_{y_id}'
+    tmpfilename = d['tmpfilename'].split('.')
+    format = tmpfilename[3]
+    name = '.'.join(tmpfilename[1:3])
     if d['status'] == 'error':
         cache.sset(name, format, 'error', 'DownloadError')
     elif d['status'] == 'downloading':
@@ -29,31 +29,30 @@ def my_hook(d):
         cache.sset(name, format, 'status', status)
     elif d['status'] == 'finished':
         cache.sset(name, format, 'status', 100)
-        cache.sset(name, format, 'filename', ...)
+        cache.sset(name, format, 'filename', d['filename'])
 
 
 def youtube_download(y_id, format, name):
-    filename = f"{y_id}_{format}"
+    # filename = f"{y_id}_{format}"
     status = cache.sget(name, format, 'status')
     if status:
         print('Already running?')
         return
 
-    cache.mset(name, format, 'status', 0)
+    cache.sset(name, format, 'status', 0)
     url = f'http://www.youtube.com/watch?v={y_id}'
     ydl_opts = {
         # 'format': 'bestaudio/best',
-        # 'postprocessors': [{
-        #     'key': 'FFmpegExtractAudio',
-        #     'preferredcodec': 'mp3',
-        #     'preferredquality': '192',
-        # }],
+        'postprocessors': [{
+            'key': 'ExecAfterDownload',
+            'exec_cmd': 'mv {} ' + f'{name}.{format}.mp4'
+        }],
         'format': f'{format}+bestaudio',
-        'outtmpl': f'{filename}',
-        # 'output': f'{filename}.%(ext)s',
+        'outtmpl': f'tmp.{name}.{format}',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
-        'merge_output_format': 'mp4'
+        'merge_output_format': 'mp4',
+        'test': 'test'
     }
     os.chdir(settings.DOWNLOAD_PATH)
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
