@@ -28,6 +28,6 @@ app.include_router(api_router, dependencies=[Depends(auth)])
 
 
 if __name__ == "__main__":
-    for key in cache.scan_iter("youtube_*"):  # TODO test scan_iter
+    for key in cache.scan_iter("youtube_*"):
         cache.delete(key)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=settings.PORT)

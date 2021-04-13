@@ -1,5 +1,4 @@
 import os
-import json
 
 import youtube_dl
 
@@ -29,7 +28,7 @@ class YouTube(object):
             download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
             data['url'] = download_url
         else:
-            status = cache.mget(self.name, format, 'status')
+            status = cache.sget(self.name, format, 'status')
             if status is None:
                 background_tasks.add_task(youtube_download, self.y_id, format, self.name)
                 # youtube_download(self.y_id, format)
@@ -80,7 +79,7 @@ class YouTube(object):
                 download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
                 data['url'] = download_url
             else:
-                status = cache.mget(self.name, format, 'status')
+                status = cache.sget(self.name, format, 'status')
             data['status'] = status
         return data
 

@@ -23,18 +23,18 @@ def my_hook(d):
     format = ...
     name = f'youtube_{y_id}'
     if d['status'] == 'error':
-        cache.mset(name, format, 'error', 'DownloadError')
+        cache.sset(name, format, 'error', 'DownloadError')
     elif d['status'] == 'downloading':
         status = int(float(d.get('_percent_str', '0').strip('%')))
-        cache.mset(name, format, 'status', status)
+        cache.sset(name, format, 'status', status)
     elif d['status'] == 'finished':
-        cache.mset(name, format, 'status', 100)
-        cache.mset(name, format, 'filename', ...)
+        cache.sset(name, format, 'status', 100)
+        cache.sset(name, format, 'filename', ...)
 
 
 def youtube_download(y_id, format, name):
     filename = f"{y_id}_{format}"
-    status = cache.mget(name, format, 'status')
+    status = cache.sget(name, format, 'status')
     if status:
         print('Already running?')
         return
@@ -60,5 +60,5 @@ def youtube_download(y_id, format, name):
         try:
             ydl.download([url])
         except youtube_dl.utils.DownloadError:
-            cache.mset(name, format, 'error', 'DownloadError')
+            cache.sset(name, format, 'error', 'DownloadError')
             raise
