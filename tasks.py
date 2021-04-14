@@ -19,45 +19,47 @@ class MyLogger(object):
 
 
 def my_hook(d):
-    tmpfilename = d['tmpfilename'].split('.')
-    format = tmpfilename[3]
-    name = '.'.join(tmpfilename[1:3])
+    # tmpfilename = d['tmpfilename'].split('.')
+    filename = d['filename'].split('.')
+    y_id = filename[1]
+    format = filename[2]
     if d['status'] == 'error':
-        cache.sset(name, format, 'error', 'DownloadError')
+        cache.sset(y_id, format, 'error', 'DownloadError')
     elif d['status'] == 'downloading':
         status = int(float(d.get('_percent_str', '0').strip('%')))
-        cache.sset(name, format, 'status', status)
+        cache.sset(y_id, format, 'status', status)
     elif d['status'] == 'finished':
-        cache.sset(name, format, 'status', 100)
-        cache.sset(name, format, 'filename', d['filename'])
+        cache.sset(y_id, format, 'status', 100)
+        cache.sset(y_id, format, 'filename', d['filename'])
 
 
-def youtube_download(y_id, format, name):
+def youtube_download(y_id, format):
+    # TODO filename
     # filename = f"{y_id}_{format}"
-    status = cache.sget(name, format, 'status')
+    status = cache.sget(y_id, format, 'status')
     if status:
         print('Already running?')
         return
 
-    cache.sset(name, format, 'status', 0)
+    cache.sset(y_id, format, 'status', 0)
     url = f'http://www.youtube.com/watch?v={y_id}'
     ydl_opts = {
         # 'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'ExecAfterDownload',
-            'exec_cmd': 'mv {} ' + f'{name}.{format}.mp4'
-        }],
+        # 'postprocessors': [{
+        #     'key': 'ExecAfterDownload',
+        #     'exec_cmd': 'mv {} ' + f'{y_id}.{format}.mp4'
+        # }],
         'format': f'{format}+bestaudio',
-        'outtmpl': f'tmp.{name}.{format}',
+        'outtmpl': f'tmp.{y_id}.{format}',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
-        'merge_output_format': 'mp4',
-        'test': 'test'
+        'merge_output_format': 'mp4'
     }
     os.chdir(settings.DOWNLOAD_PATH)
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         try:
-            ydl.download([url])
+            ret_code = ydl.download([url])
         except youtube_dl.utils.DownloadError:
-            cache.sset(name, format, 'error', 'DownloadError')
+            cache.sset(y_id, format, 'error', 'DownloadError')
             raise
+    print(ret_code)

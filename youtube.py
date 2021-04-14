@@ -12,7 +12,6 @@ class YouTube(object):
     def __init__(self, y_id):
         self.y_id = y_id
         self.url = f'http://www.youtube.com/watch?v={y_id}'
-        self.name = f'youtube.{y_id}'
 
     def download(self, format, background_tasks):
         filename = f"{self.y_id}_{format}"
@@ -28,15 +27,20 @@ class YouTube(object):
             download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
             data['url'] = download_url
         else:
-            status = cache.sget(self.name, format, 'status')
+            status = cache.sget(self.y_id, format, 'status')
             if status is None:
                 # background_tasks.add_task(youtube_download, self.y_id, format, self.name)
-                youtube_download(self.y_id, format, self.name)
+                youtube_download(self.y_id, format)
+            if status == '100':
+                filename = cache.sget(self.y_id, format, 'filename')
+                download_url = f'{settings.DOWNLOAD_URL}{filename}'
+                data['url'] = download_url
+
         data['status'] = status
         return data
 
     def extract_info(self):
-        video = cache.jget(self.name, 'info')
+        video = cache.jget(self.y_id, 'info')
         if video:
             return video
         with youtube_dl.YoutubeDL() as ydl:
@@ -46,7 +50,7 @@ class YouTube(object):
                 raise
         if 'entries' in video:
             video = video['entries'][0]  # Can be a playlist or a list of videos
-        cache.jset(self.name, 'info', video)
+        cache.jset(self.y_id, 'info', video)
         return video
 
     def info(self, format=None):
@@ -79,7 +83,7 @@ class YouTube(object):
                 download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
                 data['url'] = download_url
             else:
-                status = cache.sget(self.name, format, 'status')
+                status = cache.sget(self.y_id, format, 'status')
             data['status'] = status
         return data
 
@@ -87,4 +91,4 @@ class YouTube(object):
         ...
         filename = f"{self.y_id}_{format}"
         os.remove(filename)
-        cache.delete(self.name)
+        cache.del_one(self.y_id)
