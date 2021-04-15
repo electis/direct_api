@@ -28,6 +28,7 @@ app.include_router(api_router, dependencies=[Depends(auth)])
 
 
 if __name__ == "__main__":
-    for key in cache.scan_iter(f"{cache.prefix}{cache.delimiter}*"):
-        cache.delete(key)
+    if settings.ENVIRONMENT != 'production':
+        for key in cache.scan_iter(f"{cache.prefix}{cache.delimiter}*"):
+            cache.delete(key)
     uvicorn.run(app, host="0.0.0.0", port=settings.PORT)

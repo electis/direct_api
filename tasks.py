@@ -34,23 +34,22 @@ def my_hook(d):
 
 
 def youtube_download(y_id, format):
-    # TODO filename
-    # filename = f"{y_id}_{format}"
     status = cache.sget(y_id, format, 'status')
     if status:
         print('Already running?')
         return
 
     cache.sset(y_id, format, 'status', 0)
+    filename = f"{y_id}.{format}"
     url = f'http://www.youtube.com/watch?v={y_id}'
     ydl_opts = {
         # 'format': 'bestaudio/best',
-        # 'postprocessors': [{
-        #     'key': 'ExecAfterDownload',
-        #     'exec_cmd': 'mv {} ' + f'{y_id}.{format}.mp4'
-        # }],
+        'postprocessors': [{
+            'key': 'ExecAfterDownload',
+            'exec_cmd': 'mv {} ' + f'{filename}.mp4'
+        }],
         'format': f'{format}+bestaudio',
-        'outtmpl': f'tmp.{y_id}.{format}',
+        'outtmpl': f'tmp.{filename}',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
         'merge_output_format': 'mp4'
@@ -62,4 +61,3 @@ def youtube_download(y_id, format):
         except youtube_dl.utils.DownloadError:
             cache.sset(y_id, format, 'error', 'DownloadError')
             raise
-    print(ret_code)

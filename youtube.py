@@ -14,7 +14,7 @@ class YouTube(object):
         self.url = f'http://www.youtube.com/watch?v={y_id}'
 
     def download(self, format, background_tasks):
-        filename = f"{self.y_id}_{format}"
+        filename = f"{self.y_id}.{format}"
         data = dict()
 
         filename_ext = None
@@ -29,13 +29,8 @@ class YouTube(object):
         else:
             status = cache.sget(self.y_id, format, 'status')
             if status is None:
-                # background_tasks.add_task(youtube_download, self.y_id, format, self.name)
-                youtube_download(self.y_id, format)
-            if status == '100':
-                filename = cache.sget(self.y_id, format, 'filename')
-                download_url = f'{settings.DOWNLOAD_URL}{filename}'
-                data['url'] = download_url
-
+                background_tasks.add_task(youtube_download, self.y_id, format, self.name)
+                # youtube_download(self.y_id, format)
         data['status'] = status
         return data
 
