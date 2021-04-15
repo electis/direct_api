@@ -29,7 +29,7 @@ class YouTube(object):
         else:
             status = cache.sget(self.y_id, format, 'status')
             if status is None:
-                background_tasks.add_task(youtube_download, self.y_id, format, self.name)
+                background_tasks.add_task(youtube_download, self.y_id, format)
                 # youtube_download(self.y_id, format)
         data['status'] = status
         return data
