@@ -13,8 +13,8 @@ class YouTube(object):
         self.y_id = y_id
         self.url = f'http://www.youtube.com/watch?v={y_id}'
 
-    def download(self, format, background_tasks):
-        filename = f"{self.y_id}.{format}"
+    def download(self, v_format, background_tasks):
+        filename = f"{self.y_id}.{v_format}"
         data = dict()
 
         filename_ext = None
@@ -27,9 +27,9 @@ class YouTube(object):
             download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
             data['url'] = download_url
         else:
-            status = cache.sget(self.y_id, format, 'status')
+            status = cache.sget(self.y_id, v_format, 'status')
             if status is None:
-                background_tasks.add_task(youtube_download, self.y_id, format)
+                background_tasks.add_task(youtube_download, self.y_id, v_format)
                 # youtube_download(self.y_id, format)
         data['status'] = status
         return data
@@ -48,7 +48,7 @@ class YouTube(object):
         cache.jset(self.y_id, 'info', video)
         return video
 
-    def info(self, format=None):
+    def info(self, v_format=None):
         video = self.extract_info()
 
         criteria = lambda f: (((f.get('asr') and f['fps'])  # with audio
@@ -66,8 +66,8 @@ class YouTube(object):
             thumbnail=video['thumbnail'],
             formats=formats,
         )
-        if format:
-            filename = f"{self.y_id}_{format}"
+        if v_format:
+            filename = f"{self.y_id}_{v_format}"
             filename_ext = None
             for ext in ['mkv', 'mp4']:
                 if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')):
@@ -78,12 +78,12 @@ class YouTube(object):
                 download_url = f'{settings.DOWNLOAD_URL}{filename_ext}'
                 data['url'] = download_url
             else:
-                status = cache.sget(self.y_id, format, 'status')
+                status = cache.sget(self.y_id, v_format, 'status')
             data['status'] = status
         return data
 
     def clear(self):
         ...
-        filename = f"{self.y_id}_{format}"
-        os.remove(filename)
+        filename = f"{self.y_id}.*"
+        os.removexattr(settings.DOWNLOAD_PATH, filename)
         cache.del_one(self.y_id)

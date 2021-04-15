@@ -1,3 +1,6 @@
+'''
+Настройки сервиса, подгружаются из файла .env или переменных окружения
+'''
 import os
 
 from dotenv import load_dotenv

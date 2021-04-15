@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-import settings
+from . import settings
 from router import api_router
 
 from utils import cache
