@@ -3,7 +3,7 @@ import os
 import youtube_dl
 
 import settings
-from utils import cache
+from models import cache
 
 
 class MyLogger(object):
@@ -29,7 +29,7 @@ def my_hook(d):
         status = int(float(d.get('_percent_str', '0').strip('%')))
         cache.sset(y_id, format, 'status', status)
     elif d['status'] == 'finished':
-        cache.sset(y_id, format, 'status', 100)
+        cache.sdel(y_id, format, 'status')
         cache.sset(y_id, format, 'filename', d['filename'])
 
 

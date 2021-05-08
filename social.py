@@ -9,7 +9,7 @@ from typing import Union
 import requests
 import vk_api
 
-from models import Message, VKData, OKData
+from serializers import Message, VKData, OKData
 
 
 def url_exists(path) -> Union[bool, str]:

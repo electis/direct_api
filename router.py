@@ -1,32 +1,37 @@
 from fastapi import APIRouter, BackgroundTasks
 
-import models
+import serializers
+import services
 import social
-from youtube import YouTube
+from tasks import youtube_download
 
 api_router = APIRouter()
 
 
-@api_router.post("/youtube/", response_model=models.Result)
-async def youtube(request: models.Youtube, background_tasks: BackgroundTasks):
-    service = YouTube(request.y_id)
-    result = models.Result()
+@api_router.post("/youtube/", response_model=serializers.YouTubeResult)
+async def youtube(request: serializers.Youtube, background_tasks: BackgroundTasks):
+    result = serializers.YouTubeResult()
+    youtube = services.YouTube(request.y_id, request.format)
     try:
-        if request.download:
-            result.data = service.download(request.format, background_tasks)
-        else:
-            result.data = service.info(request.format)
+        if not request.download:
+            youtube.get_info()
+        data = serializers.YoutubeData(y_id=request.y_id, filtered_formats=youtube.filter_formats(), **youtube.video)
+        if request.format:
+            data.status, data.url = youtube.check_status()
+            if request.download and data.status is None or data.url is None:
+                background_tasks.add_task(youtube_download, request.y_id, request.format)
+                # youtube_download(request.y_id, request.format)
+                data.status = '0'
+        result.data = data
     except Exception as exc:
         result.error = str(exc)
-    else:
-        result.result = 'OK'
     return result
 
 
-@api_router.post("/social", response_model=models.Result)
-def social_view(request: models.Social):
+@api_router.post("/social", response_model=serializers.Result)
+def social_view(request: serializers.Social):
     service = getattr(social, request.service)()
-    result = models.Result()
+    result = serializers.Result()
     try:
         result.result = service.post(request.message, request.data)
     except Exception as exc:

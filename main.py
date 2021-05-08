@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 import settings
 from router import api_router
 
-from utils import cache
+from models import cache
 
 docs_kwargs = {}
 if settings.ENVIRONMENT == 'production':
