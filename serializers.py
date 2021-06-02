@@ -53,3 +53,13 @@ class YoutubeData(BaseModel):
 class YouTubeResult(BaseModel):
     error: Optional[str]
     data: Optional[YoutubeData]
+
+
+class YoutubeInfo(BaseModel):
+    y_id: str
+    format: Optional[str] = None
+
+
+class YoutubeDownload(BaseModel):
+    y_id: str
+    format: str

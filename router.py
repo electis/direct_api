@@ -2,19 +2,31 @@ from fastapi import APIRouter, BackgroundTasks
 
 import serializers
 import services
+import managers
 import social
 from tasks import youtube_download
 
 api_router = APIRouter()
 
 
+@api_router.get("/youtube/", response_model=serializers.YouTubeResult)
+async def youtube(request: serializers.YoutubeInfo):
+    result = serializers.YouTubeResult()
+    try:
+        all_data = await services.YouTube.info(request.y_id, request.format)
+        result.data = serializers.YoutubeData(**all_data)
+    except Exception as exc:
+        result.error = str(exc)
+    return result
+
+
 @api_router.post("/youtube/", response_model=serializers.YouTubeResult)
 async def youtube(request: serializers.Youtube, background_tasks: BackgroundTasks):
     result = serializers.YouTubeResult()
-    youtube = services.YouTube(request.y_id, request.format)
+    youtube = managers.YouTube(request.y_id, request.format)
     try:
         if not request.download:
-            youtube.get_info()
+            await youtube.get_info()
         data = serializers.YoutubeData(y_id=request.y_id, filtered_formats=youtube.filter_formats(), **youtube.video)
         if request.format:
             data.status, data.url = youtube.check_status()
