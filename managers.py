@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Tuple
 
 import settings
 import models
@@ -14,28 +15,30 @@ class YouTube:
         self.format = format
         self.video = models.cache.jget(self.y_id, 'info', {})
 
-    def check_status(self)-> (str, str):
-        url = None
+    async def check_file(self) -> Optional[str]:
         filename_ext = None
-        filename = f"{self.y_id}.{self.format}"
+        filename = models.YouTube.filename.format(y_id=self.y_id, format=self.format)
         for ext in ['mkv', 'mp4']:
             if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')):
                 filename_ext = f'{filename}.{ext}'
                 break
+        return filename_ext
 
-        if filename_ext:
+    async def check_status(self)-> Tuple[Optional[str], str]:
+        filename = await self.check_file()
+        if filename:
+            url = f'{settings.DOWNLOAD_URL}{filename}'
             status = '100'
-            url = f'{settings.DOWNLOAD_URL}{filename_ext}'
         else:
+            if models.cache.sget(self.y_id, self.format, 'error'):
+                raise Exception('DownloadError')
+            url = None
             status = models.cache.sget(self.y_id, self.format, 'status')
-            if status == '100':
-                status = None
-
         return status, url
 
     async def get_info(self) -> dict:
-        youtube = models.YouTube(y_id=self.y_id).extract_info()
-        self.video = youtube.video
+        if not self.video:
+            self.video = await models.YouTube().extract_info(self.y_id)
         return self.video
 
     def filter_formats(self) -> dict:

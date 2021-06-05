@@ -3,61 +3,64 @@ import os
 import youtube_dl
 
 import settings
-from models import cache
+from models import cache, YouTube
 
 
-class MyLogger(object):
-    def debug(self, msg):
-        # print('debug', msg)
-        pass
+def calc_status(status, min_perc, max_perc):
+    return int(min_perc + (max_perc - min_perc) * status / 100)
 
-    def warning(self, msg):
-        print('warning', msg)
 
-    def error(self, msg):
-        print('error', msg)
+def set_status(y_id, video_format, downloading_format, status):
+    d_format = cache.sget(y_id, video_format, 'd_format')
+    if d_format is None:
+        cache.sset(y_id, video_format, 'd_format', downloading_format)
+        d_part = 0
+        cache.sset(y_id, video_format, 'd_part', d_part)
+    elif d_format != downloading_format:
+        cache.sset(y_id, video_format, 'd_format', downloading_format)
+        d_part = 1
+        cache.sset(y_id, video_format, 'd_part', d_part)
+    else:
+        d_part = int(cache.sget(y_id, video_format, 'd_part'))
+    part_perc = (
+        (1, 70), (71, 95)
+    )
+    full_status = calc_status(status, *part_perc[d_part])
+    cache.sset(y_id, video_format, 'status', full_status)
 
 
 def my_hook(d):
-    # tmpfilename = d['tmpfilename'].split('.')
-    filename = d['filename'].split('.')
-    y_id = filename[1]
-    format = filename[2]
-    if d['status'] == 'error':
-        cache.sset(y_id, format, 'error', 'DownloadError')
-    elif d['status'] == 'downloading':
+    _, y_id, video_format, downloading_format = d['filename'].split(settings.FILE_DELIMITER)
+    if d['status'] == 'downloading':
         status = int(float(d.get('_percent_str', '0').strip('%')))
-        cache.sset(y_id, format, 'status', status)
-    elif d['status'] == 'finished':
-        cache.sdel(y_id, format, 'status')
-        cache.sset(y_id, format, 'filename', d['filename'])
+        set_status(y_id, video_format, downloading_format, status)
 
 
-def youtube_download(y_id, format):
-    status = cache.sget(y_id, format, 'status')
+def youtube_download(y_id, video_format):
+    status = cache.sget(y_id, video_format, 'status')
     if status:
         print('Already running?')
         return
 
-    cache.sset(y_id, format, 'status', 0)
-    filename = f"{y_id}.{format}"
-    url = f'http://www.youtube.com/watch?v={y_id}'
+    cache.sset(y_id, video_format, 'status', 0)
+    filename = YouTube.filename.format(y_id=y_id, format=video_format)
+    url = YouTube.url_format.format(y_id)
     ydl_opts = {
-        # 'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'ExecAfterDownload',
+            # TODO can be mkv
             'exec_cmd': 'mv {} ' + f'{filename}.mp4'
         }],
-        'format': f'{format}+bestaudio',
-        'outtmpl': f'tmp.{filename}',
-        'logger': MyLogger(),
+        'format': f'{video_format}+bestaudio',
+        'outtmpl': f'tmp{settings.FILE_DELIMITER}{filename}',
         'progress_hooks': [my_hook],
-        'merge_output_format': 'mp4'
+        # 'merge_output_format': 'mp4',
     }
     os.chdir(settings.DOWNLOAD_PATH)
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         try:
-            ret_code = ydl.download([url])
-        except youtube_dl.utils.DownloadError:
-            cache.sset(y_id, format, 'error', 'DownloadError')
+            ydl.download([url])
+        except youtube_dl.utils.DownloadError as exc:
+            cache.sset(y_id, video_format, 'error', f'{exc.__class__.__name__}: {exc}')
             raise
+    cache.sset(y_id, video_format, 'status', 100)

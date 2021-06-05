@@ -17,12 +17,6 @@ class OKData(BaseModel):
     application_secret_key: str
 
 
-class Youtube(BaseModel):
-    y_id: str
-    format: Optional[str] = None
-    download: Optional[bool] = False
-
-
 class VKData(BaseModel):
     token: str
     owner_id: str
@@ -40,8 +34,8 @@ class Result(BaseModel):
 
 
 class YoutubeData(BaseModel):
-    status: str = None
-    url: str = None
+    status: Optional[str]
+    url: Optional[str]
     y_id: str
     title: str = None
     description: str = None
@@ -50,14 +44,20 @@ class YoutubeData(BaseModel):
     filtered_formats: dict = None
 
 
-class YouTubeResult(BaseModel):
+class YouTubeInfoResult(BaseModel):
     error: Optional[str]
     data: Optional[YoutubeData]
 
 
-class YoutubeInfo(BaseModel):
+class YoutubeDownloadData(BaseModel):
+    status: Optional[str]
+    url: Optional[str]
     y_id: str
-    format: Optional[str] = None
+
+
+class YoutubeDownloadResult(BaseModel):
+    error: Optional[str]
+    data: Optional[YoutubeDownloadData]
 
 
 class YoutubeDownload(BaseModel):
