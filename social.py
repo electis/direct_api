@@ -48,7 +48,7 @@ class VK(ServiceFactory):
         vk = vk_session.get_api()
         try:
             result = vk.wall.post(message=message.text, attachments=pict, owner_id=owner_id)
-        except Exception as exc:
+        except Exception:
             raise
         if isinstance(result, dict) and 'post_id' in result:
             return result['post_id']
@@ -65,7 +65,7 @@ class VK(ServiceFactory):
         vk_session = vk_api.VkApi(login, password, auth_handler=VK.two_factor)
         try:
             vk_session.auth()
-        except vk_api.AuthError as exc:
+        except vk_api.AuthError:
             raise
         token = vk_session.token
         # result = vk.wall.get(owner_id=owner_id)
@@ -133,7 +133,7 @@ class OK(ServiceFactory):
                 session_secret_key = md5(f"{access_token}{application_secret_key}".encode('utf-8')).hexdigest().lower()
         exclude_keys = {'session_key', 'access_token'}
         params_str = ''.join([f'{key}={params[key]}'
-                              for key in sorted(params.keys()) if not key in exclude_keys])
+                              for key in sorted(params.keys()) if key not in exclude_keys])
         params_str += session_secret_key
         sig = md5(params_str.encode('utf-8')).hexdigest().lower()
         return sig

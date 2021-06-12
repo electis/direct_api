@@ -37,11 +37,11 @@ class YoutubeData(BaseModel):
     status: Optional[str]
     url: Optional[str]
     y_id: str
-    title: str = None
-    description: str = None
-    duration: str = None
-    thumbnail: str = None
-    filtered_formats: dict = None
+    title: Optional[str]
+    description: Optional[str]
+    duration: Optional[str]
+    thumbnail: Optional[str]
+    filtered_formats: Optional[dict]
 
 
 class YouTubeInfoResult(BaseModel):

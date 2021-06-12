@@ -1,10 +1,9 @@
-import uvicorn
+from uvicorn import run  # type: ignore
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 import settings
 from router import api_router
-
 from models import cache
 
 docs_kwargs = {}
@@ -31,4 +30,4 @@ if __name__ == "__main__":
     if settings.ENVIRONMENT != 'production':
         for key in cache.scan_iter(f"{cache.prefix}{cache.delimiter}*"):
             cache.delete(key)
-    uvicorn.run(app, host="0.0.0.0", port=settings.PORT)
+    run(app, host="0.0.0.0", port=settings.PORT)

@@ -24,7 +24,7 @@ class YouTube:
                 break
         return filename_ext
 
-    async def check_status(self)-> Tuple[Optional[str], str]:
+    async def check_status(self) -> Tuple[Optional[str], str]:
         filename = await self.check_file()
         if filename:
             url = f'{settings.DOWNLOAD_URL}{filename}'
@@ -44,9 +44,12 @@ class YouTube:
     def filter_formats(self) -> dict:
         if not self.video:
             return {}
-        criteria = lambda f: (((f.get('asr') and f['fps'])  # with audio
-                               or ((f.get('height') or 0) > 720))  # high quality
-                              and (f.get('container') != 'webm_dash'))  # no webm
+
+        def criteria(f):
+            return (((f.get('asr') and f['fps'])  # with audio
+                     or ((f.get('height') or 0) > 720))  # high quality
+                    and (f.get('container') != 'webm_dash'))  # no webm
+
         formats = {f['format_id']: [f['format_note']]
                    for f in self.video['formats']
                    if criteria(f)}
