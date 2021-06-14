@@ -1,3 +1,4 @@
+"""фоновые таски FastAPI"""
 import os
 
 import youtube_dl
@@ -7,10 +8,12 @@ from models import cache, YouTube
 
 
 def calc_status(status, min_perc, max_perc):
+    """Преобразует процент скачивания в пределы mix и max"""
     return int(min_perc + (max_perc - min_perc) * status / 100)
 
 
 def set_status(y_id, video_format, downloading_format, status):
+    """сохраняет текущий прогресс скачивания в преобразованном виде"""
     d_format = cache.sget(y_id, video_format, 'd_format')
     if d_format is None:
         cache.sset(y_id, video_format, 'd_format', downloading_format)
@@ -22,21 +25,23 @@ def set_status(y_id, video_format, downloading_format, status):
         cache.sset(y_id, video_format, 'd_part', d_part)
     else:
         d_part = int(cache.sget(y_id, video_format, 'd_part'))
-    part_perc = (
-        (1, 70), (71, 95)
-    )
+    part_perc = ((1, 70), (71, 95))
     full_status = calc_status(status, *part_perc[d_part])
     cache.sset(y_id, video_format, 'status', full_status)
 
 
-def my_hook(d):
-    _, y_id, video_format, downloading_format = d['filename'].split(settings.FILE_DELIMITER)
-    if d['status'] == 'downloading':
-        status = int(float(d.get('_percent_str', '0').strip('%')))
+def my_hook(info):
+    """хук прогресса скачивания"""
+    _, y_id, video_format, downloading_format = info['filename'].split(
+        settings.FILE_DELIMITER
+    )
+    if info['status'] == 'downloading':
+        status = int(float(info.get('_percent_str', '0').strip('%')))
         set_status(y_id, video_format, downloading_format, status)
 
 
 def youtube_download(y_id, video_format):
+    """таск скачивания видео"""
     status = cache.sget(y_id, video_format, 'status')
     if status:
         print('Already running?')
@@ -46,11 +51,13 @@ def youtube_download(y_id, video_format):
     filename = YouTube.filename.format(y_id=y_id, format=video_format)
     url = YouTube.url_format.format(y_id)
     ydl_opts = {
-        'postprocessors': [{
-            'key': 'ExecAfterDownload',
-            # TODO can be mkv
-            'exec_cmd': 'mv {} ' + f'{filename}.mp4'
-        }],
+        'postprocessors': [
+            {
+                'key': 'ExecAfterDownload',
+                # TODO can be mkv
+                'exec_cmd': 'mv {} ' + f'{filename}.mp4',
+            }
+        ],
         'format': f'{video_format}+bestaudio',
         'outtmpl': f'tmp{settings.FILE_DELIMITER}{filename}',
         'progress_hooks': [my_hook],

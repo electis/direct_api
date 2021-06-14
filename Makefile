@@ -1,5 +1,5 @@
 lint:
-	flake8 .
-	pylint *
+	black . --skip-string-normalization
 	mypy .
-	black .
+	flake8 .
+	pylint *.py

@@ -1,3 +1,4 @@
+"""основные настройки проекта, берутся из .env файла или из переменных окружения"""
 import os
 
 from dotenv import load_dotenv

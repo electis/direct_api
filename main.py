@@ -1,4 +1,5 @@
-from uvicorn import run  # type: ignore
+"""Запускает сервер FastAPI"""
+from uvicorn import run
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
@@ -6,15 +7,12 @@ import settings
 from router import api_router
 from models import cache
 
-docs_kwargs = {}
-if settings.ENVIRONMENT == 'production':
-    docs_kwargs = dict(docs_url=None, redoc_url=None)
-
-app = FastAPI(**docs_kwargs)
+app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 async def auth(token: str = Depends(oauth2_scheme)):
+    """Реализует аутентификацию по токену для всех методов"""
     if token == settings.SECRET_TOKEN:
         return True
     raise HTTPException(
@@ -22,6 +20,7 @@ async def auth(token: str = Depends(oauth2_scheme)):
         detail="Invalid authentication credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
 
 app.include_router(api_router, dependencies=[Depends(auth)])
 
