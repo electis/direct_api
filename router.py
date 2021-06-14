@@ -1,5 +1,5 @@
 """эндпоинты проекта"""
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from exceptions import YouTubeDownloadError, AuthError, UrlError
 import serializers
@@ -9,36 +9,28 @@ import social
 api_router = APIRouter()
 
 
-@api_router.get("/youtube/", response_model=serializers.YouTubeInfoResult)
+@api_router.get("/youtube/", response_model=serializers.YoutubeData)
 async def youtube_get(y_id: str, video_format: str = None):
     """получение данных о видео YouTube"""
-    result = serializers.YouTubeInfoResult()
     try:
         all_data = await services.YouTube.info(y_id, video_format)
     except YouTubeDownloadError as exc:
-        result.error = str(exc)
-    else:
-        result.data = serializers.YoutubeData(y_id=y_id, **all_data)
-    return result
+        raise HTTPException(status_code=500, detail=str(exc))
+    return serializers.YoutubeData(y_id=y_id, **all_data)
 
 
-@api_router.post("/youtube/", response_model=serializers.YoutubeDownloadResult)
+@api_router.post("/youtube/", response_model=serializers.YoutubeDownloadData)
 async def youtube_post(
     request: serializers.YoutubeDownload, background_tasks: BackgroundTasks
 ):
     """скачивание видео с YouTube"""
-    result = serializers.YoutubeDownloadResult()
     try:
         status, url = await services.YouTube.download(
             request.y_id, request.format, background_tasks
         )
     except YouTubeDownloadError as exc:
-        result.error = str(exc)
-    else:
-        result.data = serializers.YoutubeDownloadData(
-            **dict(y_id=request.y_id, status=status, url=url)
-        )
-    return result
+        raise HTTPException(status_code=500, detail=str(exc))
+    return serializers.YoutubeDownloadData(**dict(y_id=request.y_id, status=status, url=url))
 
 
 @api_router.post("/social", response_model=serializers.Result)
