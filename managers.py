@@ -24,9 +24,7 @@ class YouTube:
         filename_ext = None
         filename = models.YouTube.filename.format(y_id=self.y_id, format=self.format)
         for ext in ['mkv', 'mp4']:
-            if os.path.isfile(
-                os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')
-            ):
+            if os.path.isfile(os.path.join(settings.DOWNLOAD_PATH, f'{filename}.{ext}')):
                 filename_ext = f'{filename}.{ext}'
                 break
         return filename_ext
@@ -58,15 +56,10 @@ class YouTube:
 
         def criteria(format_):
             return (
-                (format_.get('asr') and format_['fps'])  # with audio
-                or ((format_.get('height') or 0) > 720)
+                (format_.get('asr') and format_['fps']) or ((format_.get('height') or 0) > 720)  # with audio
             ) and (  # high quality
                 format_.get('container') != 'webm_dash'
             )  # no webm
 
-        formats = {
-            f['format_id']: [f['format_note']]
-            for f in self.video['formats']
-            if criteria(f)
-        }
+        formats = {f['format_id']: [f['format_note']] for f in self.video['formats'] if criteria(f)}
         return formats

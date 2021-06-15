@@ -19,9 +19,7 @@ class RedisDB(Redis):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def from_url(
-        cls, url, db=None, delimiter=settings.REDIS_DELIMITER, prefix='', **kwargs
-    ):
+    def from_url(cls, url, db=None, delimiter=settings.REDIS_DELIMITER, prefix='', **kwargs):
         self = super().from_url(url, db=None, **kwargs)
         cls.set_attrib(self, delimiter, prefix)
         return self

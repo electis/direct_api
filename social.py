@@ -21,9 +21,7 @@ def url_exists(path) -> Union[bool, str]:
 
 class ServiceFactory(ABC):
     @abstractmethod
-    def post(
-        self, message: Message, data: Union[VKData, OKData]
-    ) -> Union[int, str, None]:
+    def post(self, message: Message, data: Union[VKData, OKData]) -> Union[int, str, None]:
         '''
         post message to social service
         :return: post_id or None
@@ -138,19 +136,9 @@ class OK(ServiceFactory):
             if not session:
                 session_secret_key = application_secret_key
             else:
-                session_secret_key = (
-                    md5(f"{access_token}{application_secret_key}".encode('utf-8'))
-                    .hexdigest()
-                    .lower()
-                )
+                session_secret_key = md5(f"{access_token}{application_secret_key}".encode('utf-8')).hexdigest().lower()
         exclude_keys = {'session_key', 'access_token'}
-        params_str = ''.join(
-            [
-                f'{key}={params[key]}'
-                for key in sorted(params.keys())
-                if key not in exclude_keys
-            ]
-        )
+        params_str = ''.join([f'{key}={params[key]}' for key in sorted(params.keys()) if key not in exclude_keys])
         params_str += session_secret_key
         sig = md5(params_str.encode('utf-8')).hexdigest().lower()
         return sig

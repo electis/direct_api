@@ -20,14 +20,10 @@ async def youtube_get(y_id: str, video_format: str = None):
 
 
 @api_router.post("/youtube/", response_model=serializers.YoutubeDownloadData)
-async def youtube_post(
-    request: serializers.YoutubeDownload, background_tasks: BackgroundTasks
-):
+async def youtube_post(request: serializers.YoutubeDownload, background_tasks: BackgroundTasks):
     """скачивание видео с YouTube"""
     try:
-        status, url = await services.YouTube.download(
-            request.y_id, request.format, background_tasks
-        )
+        status, url = await services.YouTube.download(request.y_id, request.format, background_tasks)
     except YouTubeDownloadError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     return serializers.YoutubeDownloadData(**dict(y_id=request.y_id, status=status, url=url))

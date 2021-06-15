@@ -32,9 +32,7 @@ def set_status(y_id, video_format, downloading_format, status):
 
 def my_hook(info):
     """хук прогресса скачивания"""
-    _, y_id, video_format, downloading_format = info['filename'].split(
-        settings.FILE_DELIMITER
-    )
+    _, y_id, video_format, downloading_format = info['filename'].split(settings.FILE_DELIMITER)
     if info['status'] == 'downloading':
         status = int(float(info.get('_percent_str', '0').strip('%')))
         set_status(y_id, video_format, downloading_format, status)
