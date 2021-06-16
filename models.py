@@ -7,6 +7,56 @@ from redis import Redis
 
 import settings
 
+from threading import Lock, Thread
+
+
+class SingletonMeta(type):
+    """
+    потокобезопасная реализация класса Singleton.
+    """
+    _instances = {}
+    _lock: Lock = Lock()
+
+    def __call__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls not in cls._instances:
+                instance = super().__call__(*args, **kwargs)
+                cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class DB(SingletonMeta):
+
+    def __init__(self):
+        self.db = Redis.from_url(settings.REDIS)
+        self.delimiter = settings.REDIS_DELIMITER
+
+    def make_key(self, subname, key):
+        """добавляет подназвание к ключу"""
+        return f"{subname}{self.delimiter}{key}"
+
+    def jset(self, name, key, value):
+        """сохраняет значение как json строку"""
+        return self.db.hset(name, key, json.dumps(value))
+
+    def jget(self, name, key, default=None):
+        """возвращает сохранённую json строку как объект"""
+        result = self.db.hget(name, key)
+        if result is None:
+            return default
+        return json.loads(result)
+
+    def sset(self, name, subname, key, value):
+        """сохраняет значение как строку с поддержкой подназвания"""
+        return self.db.hset(name, self.make_key(subname, key), value)
+
+    def sget(self, name, subname, key):
+        """возвращает строку с поддержкой подназвания"""
+        value = self.db.hget(name, self.make_key(subname, key))
+        if isinstance(value, bytes):
+            return value.decode()
+        return value
+
 
 class RedisDB(Redis):
     """Дополнительные методы для работы с данными в Redis"""

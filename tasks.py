@@ -40,6 +40,7 @@ def my_hook(info):
 
 def youtube_download(y_id, video_format):
     """таск скачивания видео"""
+    # Фасад?
     status = cache.sget(y_id, video_format, 'status')
     if status:
         print('Already running?')
