@@ -20,23 +20,23 @@ def url_exists(path) -> Union[bool, str]:
 
 
 class ServiceFactory(ABC):
+    """Фабричный метод для сервисов соцсетей"""
+    # TODO + Шаблонный метод ?
     @abstractmethod
     def post(self, message: Message, data: Union[VKData, OKData]) -> Union[int, str, None]:
-        '''
+        """
         post message to social service
         :return: post_id or None
-        '''
-        pass
+        """
 
     @abstractmethod
     def auth(self, login, password) -> str:
-        '''
+        """
         provide auth in social service
         :param login:
         :param password:
         :return: access token
-        '''
-        pass
+        """
 
 
 class VK(ServiceFactory):
