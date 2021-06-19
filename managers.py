@@ -17,7 +17,7 @@ class YouTube:
     def __init__(self, y_id, video_format=None):
         self.y_id = y_id
         self.format = video_format
-        self.video = models.cache.jget(self.y_id, 'info', {})
+        self.video = models.DB().jget(self.y_id, 'info', {})
 
     async def check_file(self) -> Optional[str]:
         """Проверяет существование файла для скачивания, возвращает имя файла"""
@@ -37,10 +37,10 @@ class YouTube:
             url = f'{settings.DOWNLOAD_URL}{filename}'
             status = '100'
         else:
-            if models.cache.sget(self.y_id, self.format, 'error'):
+            if models.DB().sget(self.y_id, self.format, 'error'):
                 raise YouTubeDownloadError('Ошибка при скачивании видео')
             url = None
-            status = models.cache.sget(self.y_id, self.format, 'status')
+            status = models.DB().sget(self.y_id, self.format, 'status')
         return status, url
 
     async def get_info(self) -> dict:

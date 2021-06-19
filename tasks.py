@@ -4,7 +4,7 @@ import os
 import youtube_dl
 
 import settings
-from models import cache, YouTube
+from models import DB, YouTube
 
 
 def calc_status(status, min_perc, max_perc):
@@ -14,20 +14,21 @@ def calc_status(status, min_perc, max_perc):
 
 def set_status(y_id, video_format, downloading_format, status):
     """сохраняет текущий прогресс скачивания в преобразованном виде"""
-    d_format = cache.sget(y_id, video_format, 'd_format')
+    db = DB()
+    d_format = db.sget(y_id, video_format, 'd_format')
     if d_format is None:
-        cache.sset(y_id, video_format, 'd_format', downloading_format)
+        db.sset(y_id, video_format, 'd_format', downloading_format)
         d_part = 0
-        cache.sset(y_id, video_format, 'd_part', d_part)
+        db.sset(y_id, video_format, 'd_part', d_part)
     elif d_format != downloading_format:
-        cache.sset(y_id, video_format, 'd_format', downloading_format)
+        db.sset(y_id, video_format, 'd_format', downloading_format)
         d_part = 1
-        cache.sset(y_id, video_format, 'd_part', d_part)
+        db.sset(y_id, video_format, 'd_part', d_part)
     else:
-        d_part = int(cache.sget(y_id, video_format, 'd_part'))
+        d_part = int(db.sget(y_id, video_format, 'd_part'))
     part_perc = ((1, 70), (71, 95))
     full_status = calc_status(status, *part_perc[d_part])
-    cache.sset(y_id, video_format, 'status', full_status)
+    db.sset(y_id, video_format, 'status', full_status)
 
 
 def my_hook(info):
@@ -41,12 +42,13 @@ def my_hook(info):
 def youtube_download(y_id, video_format):
     """таск скачивания видео"""
     # Фасад?
-    status = cache.sget(y_id, video_format, 'status')
+    db = DB()
+    status = db.sget(y_id, video_format, 'status')
     if status:
         print('Already running?')
         return
 
-    cache.sset(y_id, video_format, 'status', 0)
+    db.sset(y_id, video_format, 'status', 0)
     filename = YouTube.filename.format(y_id=y_id, format=video_format)
     url = YouTube.url_format.format(y_id)
     ydl_opts = {
@@ -67,6 +69,6 @@ def youtube_download(y_id, video_format):
         try:
             ydl.download([url])
         except youtube_dl.utils.DownloadError as exc:
-            cache.sset(y_id, video_format, 'error', f'{exc.__class__.__name__}: {exc}')
+            db.sset(y_id, video_format, 'error', f'{exc.__class__.__name__}: {exc}')
             raise
-    cache.sset(y_id, video_format, 'status', 100)
+    db.sset(y_id, video_format, 'status', 100)

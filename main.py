@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 import settings
 from router import api_router
-from models import cache
+from models import DB
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -27,6 +27,6 @@ app.include_router(api_router, dependencies=[Depends(auth)])
 
 if __name__ == "__main__":
     if settings.ENVIRONMENT != 'production':
-        for key in cache.scan_iter(f"{cache.prefix}{cache.delimiter}*"):
-            cache.delete(key)
+        for name in DB().scan():
+            DB().delete(name)
     run(app, host="0.0.0.0", port=settings.PORT)
