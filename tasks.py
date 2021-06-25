@@ -39,9 +39,8 @@ def my_hook(info):
         set_status(y_id, video_format, downloading_format, status)
 
 
-def youtube_download(y_id, video_format):
+def youtube_download_task(y_id, video_format):
     """таск скачивания видео"""
-    # Фасад?
     db = DB()
     status = db.sget(y_id, video_format, 'status')
     if status:

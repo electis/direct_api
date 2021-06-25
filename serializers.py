@@ -38,11 +38,10 @@ class Social(BaseModel):
     message: Message
 
 
-class Result(BaseModel):
+class SocialResult(BaseModel):
     """основной ответ сервиса"""
 
     result: Optional[str]
-    error: Optional[str]
 
 
 class YoutubeData(BaseModel):

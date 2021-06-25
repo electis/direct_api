@@ -11,3 +11,7 @@ class AuthError(Exception):
 
 class UrlError(Exception):
     """Ошибка проверки ссылки"""
+
+
+class PostError(Exception):
+    """Ошибка постинга в соцсеть"""
