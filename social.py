@@ -13,15 +13,16 @@ from exceptions import AuthError, UrlError, PostError
 from serializers import Message, VKData, OKData
 
 
-def url_exists(path) -> Union[bool, str]:
-    r = requests.head(path)
-    return r.status_code == requests.codes.ok
+def url_exists(path: str) -> bool:
+    """Проверяет url на доступность"""
+    response = requests.head(path, timeout=1)
+    return response.status_code == 200
 
 
 class Abstract(ABC):
     """Шаблонный метод для сервисов соцсетей"""
 
-    def post_message(self, message: Message, data: Union[VKData, OKData]) -> Union[int, str, None]:
+    def post_message(self, message: Message, data: Union[VKData, OKData]) -> str:
         """Шаблон постинга в соцсеть"""
         msg = self.make_message(message=message)
         auth = self.get_auth(data=data, msg=msg)
@@ -29,11 +30,11 @@ class Abstract(ABC):
         return result
 
     @abstractmethod
-    def make_message(self, message: Message):
+    def make_message(self, message: Message) -> dict:
         """Подготавливаем сообщение"""
 
     @abstractmethod
-    def get_auth(self, data:  Union[VKData, OKData], msg: dict):
+    def get_auth(self, data: Union[VKData, OKData], msg: dict) -> dict:
         """Добавляем данные авторизации"""
 
     @abstractmethod
@@ -51,18 +52,19 @@ class Abstract(ABC):
 
 
 class VK(Abstract):
+    """Вконтакте"""
 
-    def make_message(self, message: Message):
+    def make_message(self, message: Message) -> dict:
         pict = message.pict
         if pict and not url_exists(pict):
             raise UrlError("pict not found")
         return dict(message=message.text, attachments=pict)
 
-    def get_auth(self, data: VKData, **kwargs):
+    def get_auth(self, data: VKData, msg: dict) -> dict:  # type: ignore
         session = vk_api.VkApi(token=data.token).get_api()
         return dict(session=session, owner_id=data.owner_id)
 
-    def post(self, msg: dict, auth: dict):
+    def post(self, msg: dict, auth: dict) -> str:
         result = auth['session'].wall.post(owner_id=auth['owner_id'], **msg)
         if isinstance(result, dict) and 'post_id' in result:
             return result['post_id']
@@ -70,6 +72,7 @@ class VK(Abstract):
 
     @staticmethod
     def two_factor():
+        """Набросок для двухфакторки"""
         code = input('Code? ')
         remember_device = True
         return code, remember_device
@@ -80,8 +83,8 @@ class VK(Abstract):
         vk_session = vk_api.VkApi(login, password, auth_handler=VK.two_factor)
         try:
             vk_session.auth()
-        except vk_api.AuthError:
-            raise AuthError
+        except vk_api.AuthError as exc:
+            raise AuthError from exc
         token = vk_session.token
         # result = vk.wall.get(owner_id=owner_id)
         # print(vk_session.token)
@@ -89,6 +92,8 @@ class VK(Abstract):
 
 
 class OK(Abstract):
+    """Одноклассники"""
+
     api_url = 'https://api.ok.ru/fb.do'
 
     def make_message(self, message: Message):
@@ -97,15 +102,14 @@ class OK(Abstract):
             media.append(dict(type='text', text=message.text))
         if message.pict:
             media.append(self.load_image(message.pict))
-        return dict(attachment=json.dumps({"media": media}), method="mediatopic.post", type="GROUP_THEME",)
-
-    def get_auth(self, data: OKData, msg: dict):
-        params = dict(
-            application_key=data.application_key,
-            gid=data.gid,
-            access_token=data.access_token,
-            **msg
+        return dict(
+            attachment=json.dumps({"media": media}),
+            method="mediatopic.post",
+            type="GROUP_THEME",
         )
+
+    def get_auth(self, data: OKData, msg: dict):  # type: ignore
+        params = dict(application_key=data.application_key, gid=data.gid, access_token=data.access_token, **msg)
         sig = self.get_sig(
             params,
             application_secret_key=data.application_secret_key,
@@ -115,13 +119,15 @@ class OK(Abstract):
         del params['method']
         return params
 
-    def post(self, auth: dict, **kwargs):
-        self.call("mediatopic.post", **auth)
+    def post(self, msg: dict, auth: dict) -> str:
+        result = self.call("mediatopic.post", **auth)
+        return result
 
     def auth(self, login, password) -> str:
         ...
 
     def load_image(self, image_url):
+        """Подгрузка картинки в ОК"""
         url = self.call("photosV2.getUploadUrl", count=1)
         response = requests.post(url, data=dict(image=image_url))
         if response.status_code == 200:
@@ -132,20 +138,16 @@ class OK(Abstract):
         return token
 
     def call(self, method: str, **params):
+        """Вызов метода в ОК"""
         params['method'] = method
         response = requests.post(self.api_url, data=params)
         if response.status_code == 200:
             return response.text
-        raise PostError(response.text)
+        raise PostError(response.status_code)
 
     @staticmethod
-    def get_sig(
-        params: dict,
-        session_secret_key=None,
-        session=True,
-        application_secret_key=None,
-        access_token=None,
-    ):
+    def get_sig(params: dict, session_secret_key=None, session=True, application_secret_key=None, access_token=None):
+        """Подпись поста для ОК"""
         if not session_secret_key:
             if not session:
                 session_secret_key = application_secret_key

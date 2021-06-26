@@ -7,7 +7,7 @@ import social
 from tasks import youtube_download_task
 
 
-async def youtube_info(y_id: str, video_format: str=None) -> dict:
+async def youtube_info(y_id: str, video_format: str = None) -> dict:
     """получение информации о видео"""
     youtube = managers.YouTube(y_id, video_format)
     result = await youtube.get_info()
@@ -26,7 +26,7 @@ async def youtube_download(y_id: str, video_format: str, background_tasks: Backg
     return status, url
 
 
-async def social_post(social_model: serializers.Social):
+async def social_post(social_model: serializers.Social) -> str:
     """Отправка сообщения в соцсеть"""
     service: social.Abstract = getattr(social, social_model.service)()
-    return service.post(social_model.message, social_model.data)
+    return service.post_message(social_model.message, social_model.data)

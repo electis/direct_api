@@ -14,21 +14,21 @@ def calc_status(status, min_perc, max_perc):
 
 def set_status(y_id, video_format, downloading_format, status):
     """сохраняет текущий прогресс скачивания в преобразованном виде"""
-    db = DB()
-    d_format = db.sget(y_id, video_format, 'd_format')
+    dbase = DB()
+    d_format = dbase.sget(y_id, video_format, 'd_format')
     if d_format is None:
-        db.sset(y_id, video_format, 'd_format', downloading_format)
+        dbase.sset(y_id, video_format, 'd_format', downloading_format)
         d_part = 0
-        db.sset(y_id, video_format, 'd_part', d_part)
+        dbase.sset(y_id, video_format, 'd_part', d_part)
     elif d_format != downloading_format:
-        db.sset(y_id, video_format, 'd_format', downloading_format)
+        dbase.sset(y_id, video_format, 'd_format', downloading_format)
         d_part = 1
-        db.sset(y_id, video_format, 'd_part', d_part)
+        dbase.sset(y_id, video_format, 'd_part', d_part)
     else:
-        d_part = int(db.sget(y_id, video_format, 'd_part'))
+        d_part = int(dbase.sget(y_id, video_format, 'd_part'))
     part_perc = ((1, 70), (71, 95))
     full_status = calc_status(status, *part_perc[d_part])
-    db.sset(y_id, video_format, 'status', full_status)
+    dbase.sset(y_id, video_format, 'status', full_status)
 
 
 def my_hook(info):
@@ -41,13 +41,13 @@ def my_hook(info):
 
 def youtube_download_task(y_id, video_format):
     """таск скачивания видео"""
-    db = DB()
-    status = db.sget(y_id, video_format, 'status')
+    dbase = DB()
+    status = dbase.sget(y_id, video_format, 'status')
     if status:
         print('Already running?')
         return
 
-    db.sset(y_id, video_format, 'status', 0)
+    dbase.sset(y_id, video_format, 'status', 0)
     filename = YouTube.filename.format(y_id=y_id, format=video_format)
     url = YouTube.url_format.format(y_id)
     ydl_opts = {
@@ -68,6 +68,6 @@ def youtube_download_task(y_id, video_format):
         try:
             ydl.download([url])
         except youtube_dl.utils.DownloadError as exc:
-            db.sset(y_id, video_format, 'error', f'{exc.__class__.__name__}: {exc}')
+            dbase.sset(y_id, video_format, 'error', f'{exc.__class__.__name__}: {exc}')
             raise
-    db.sset(y_id, video_format, 'status', 100)
+    dbase.sset(y_id, video_format, 'status', 100)

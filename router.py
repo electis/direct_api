@@ -14,7 +14,7 @@ async def youtube_get(y_id: str, video_format: str = None):
     try:
         all_data = await services.youtube_info(y_id, video_format)
     except YouTubeDownloadError as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.YoutubeData(y_id=y_id, **all_data)
 
 
@@ -24,15 +24,15 @@ async def youtube_post(request: serializers.YoutubeDownload, background_tasks: B
     try:
         status, url = await services.youtube_download(request.y_id, request.format, background_tasks)
     except YouTubeDownloadError as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.YoutubeDownloadData(**dict(y_id=request.y_id, status=status, url=url))
 
 
 @api_router.post("/social", response_model=serializers.SocialResult)
-def social_post(request: serializers.Social):
+async def social_post(request: serializers.Social):
     """отправка сообщения в соцсеть"""
     try:
         result = await services.social_post(request)
     except (AuthError, UrlError) as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.SocialResult(result=result)
