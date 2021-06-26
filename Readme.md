@@ -1,4 +1,4 @@
-# Direct-api
+# Direct-API
 Для связи с автором пишите на Andrey@electis.ru 
 
 ## Описание
@@ -45,6 +45,13 @@ sudo supervisorctl reread && sudo supervisorctl update
 ```shell
 sudo ln -s /www/direct_api/etc/nginx.conf /etc/nginx/sites-enabled/direct_api.conf
 sudo nginx -s reload
+```
+
+## Генерация документации
+```shell
+pip install sphinx
+cd docs
+make html
 ```
 
 ## Проверка оформления кода
