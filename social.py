@@ -10,6 +10,7 @@ import requests
 import vk_api
 
 from exceptions import AuthError, UrlError, PostError
+from helpers import logger
 from serializers import Message, VKData, OKData
 
 
@@ -19,26 +20,26 @@ def url_exists(path: str) -> bool:
     return response.status_code == 200
 
 
-class Abstract(ABC):
+class Service(ABC):
     """Шаблонный метод для сервисов соцсетей"""
 
-    def post_message(self, message: Message, data: Union[VKData, OKData]) -> str:
+    async def post_message(self, message: Message, data: Union[VKData, OKData]) -> str:
         """Шаблон постинга в соцсеть"""
-        msg = self.make_message(message=message)
-        auth = self.get_auth(data=data, msg=msg)
-        result = self.post(msg=msg, auth=auth)
+        msg = await self.make_message(message=message)
+        auth = await self.get_auth(data=data, msg=msg)
+        result = await self.post(msg=msg, auth=auth)
         return result
 
     @abstractmethod
-    def make_message(self, message: Message) -> dict:
+    async def make_message(self, message: Message) -> dict:
         """Подготавливаем сообщение"""
 
     @abstractmethod
-    def get_auth(self, data: Union[VKData, OKData], msg: dict) -> dict:
+    async def get_auth(self, data: Union[VKData, OKData], msg: dict) -> dict:
         """Добавляем данные авторизации"""
 
     @abstractmethod
-    def post(self, msg: dict, auth: dict) -> str:
+    async def post(self, msg: dict, auth: dict) -> str:
         """post message to social service"""
 
     @abstractmethod
@@ -51,20 +52,45 @@ class Abstract(ABC):
         """
 
 
-class VK(Abstract):
+class Logger(Service):
+    """Декоратор для логирования"""
+
+    _obj: Service
+
+    def __init__(self, obj):
+        self._obj = obj
+
+    @logger
+    async def make_message(self, message: Message) -> dict:
+        return await self._obj.make_message(message)
+
+    @logger
+    async def get_auth(self, data: Union[VKData, OKData], msg: dict) -> dict:
+        return await self._obj.get_auth(data, msg)
+
+    @logger(debug=True)
+    async def post(self, msg: dict, auth: dict) -> str:
+        return await self._obj.post(msg, auth)
+
+    @logger
+    def auth(self, login, password) -> str:
+        return self._obj.auth(login, password)
+
+
+class VK(Service):
     """Вконтакте"""
 
-    def make_message(self, message: Message) -> dict:
+    async def make_message(self, message: Message) -> dict:
         pict = message.pict
         if pict and not url_exists(pict):
             raise UrlError("pict not found")
         return dict(message=message.text, attachments=pict)
 
-    def get_auth(self, data: VKData, msg: dict) -> dict:  # type: ignore
+    async def get_auth(self, data: VKData, msg: dict) -> dict:  # type: ignore
         session = vk_api.VkApi(token=data.token).get_api()
         return dict(session=session, owner_id=data.owner_id)
 
-    def post(self, msg: dict, auth: dict) -> str:
+    async def post(self, msg: dict, auth: dict) -> str:
         result = auth['session'].wall.post(owner_id=auth['owner_id'], **msg)
         if isinstance(result, dict) and 'post_id' in result:
             return result['post_id']
@@ -91,12 +117,12 @@ class VK(Abstract):
         return token
 
 
-class OK(Abstract):
+class OK(Service):
     """Одноклассники"""
 
     api_url = 'https://api.ok.ru/fb.do'
 
-    def make_message(self, message: Message):
+    async def make_message(self, message: Message):
         media = []
         if message.text:
             media.append(dict(type='text', text=message.text))
@@ -108,7 +134,7 @@ class OK(Abstract):
             type="GROUP_THEME",
         )
 
-    def get_auth(self, data: OKData, msg: dict):  # type: ignore
+    async def get_auth(self, data: OKData, msg: dict) -> dict:  # type: ignore
         params = dict(application_key=data.application_key, gid=data.gid, access_token=data.access_token, **msg)
         sig = self.get_sig(
             params,
@@ -119,7 +145,7 @@ class OK(Abstract):
         del params['method']
         return params
 
-    def post(self, msg: dict, auth: dict) -> str:
+    async def post(self, msg: dict, auth: dict) -> str:
         result = self.call("mediatopic.post", **auth)
         return result
 

@@ -32,7 +32,8 @@ async def youtube_post(request: serializers.YoutubeDownload, background_tasks: B
 async def social_post(request: serializers.Social):
     """отправка сообщения в соцсеть"""
     try:
+        assert request.message.text or request.message.pict, "Message can't be empty"
         result = await services.social_post(request)
-    except (AuthError, UrlError) as exc:
+    except (AuthError, UrlError, AssertionError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.SocialResult(result=result)

@@ -28,5 +28,6 @@ async def youtube_download(y_id: str, video_format: str, background_tasks: Backg
 
 async def social_post(social_model: serializers.Social) -> str:
     """Отправка сообщения в соцсеть"""
-    service: social.Abstract = getattr(social, social_model.service)()
-    return service.post_message(social_model.message, social_model.data)
+    service: social.Service = getattr(social, social_model.service)()
+    service = social.Logger(service)
+    return await service.post_message(social_model.message, social_model.data)

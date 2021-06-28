@@ -3,3 +3,6 @@ max-line-length=120
 
 [MASTER]
 extension-pkg-whitelist=pydantic
+
+[MISCELLANEOUS]
+notes=FIXME,XXX
