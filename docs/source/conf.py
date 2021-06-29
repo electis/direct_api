@@ -13,6 +13,8 @@
 import os
 import sys
 
+from recommonmark.parser import CommonMarkParser
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 
@@ -33,7 +35,14 @@ release = '0.1a1'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'recommonmark',
 ]
+
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+
+source_suffix = ['.rst', '.md']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

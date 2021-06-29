@@ -49,7 +49,8 @@ sudo nginx -s reload
 
 ## Генерация документации
 ```shell
-pip install sphinx
+pip install sphinx recommonmark
+ln -s /путь/к/проекту/Readme.md docs/source/Readme.md
 cd docs
 make html
 ```

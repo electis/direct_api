@@ -1,10 +1,11 @@
-direct_api
-==========
+Модули
+======
 
 .. toctree::
    :maxdepth: 2
 
    exceptions
+   helpers
    main
    managers
    models
