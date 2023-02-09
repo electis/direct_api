@@ -31,7 +31,7 @@ class VKData(BaseModel):
 
 
 class Social(BaseModel):
-    """входящий запрос на отправку в соцсеть"""
+    """Входящий запрос на отправку в соцсеть"""
 
     service: SERVICES
     data: Union[OKData, VKData]
@@ -39,13 +39,21 @@ class Social(BaseModel):
 
 
 class SocialResult(BaseModel):
-    """основной ответ сервиса"""
+    """Основной ответ сервиса"""
 
     result: Optional[str]
 
 
+class Inform(BaseModel):
+    """Входящее уведомление"""
+
+    from_name: Optional[str]
+    from_contact: Optional[str]
+    message: Optional[str]
+
+
 class YoutubeData(BaseModel):
-    """данные о видео с YouTube"""
+    """Данные о видео с YouTube"""
 
     status: Optional[str]
     url: Optional[str]
@@ -58,14 +66,14 @@ class YoutubeData(BaseModel):
 
 
 class YouTubeInfoResult(BaseModel):
-    """ответ сервиса по данным о видео"""
+    """Ответ сервиса по данным о видео"""
 
     error: Optional[str]
     data: Optional[YoutubeData]
 
 
 class YoutubeDownloadData(BaseModel):
-    """информация по скачиваемому видео"""
+    """Информация по скачиваемому видео"""
 
     status: Optional[str]
     url: Optional[str]
@@ -73,14 +81,14 @@ class YoutubeDownloadData(BaseModel):
 
 
 class YoutubeDownloadResult(BaseModel):
-    """ответ сервиса по запросу на скачивание видео"""
+    """Ответ сервиса по запросу на скачивание видео"""
 
     error: Optional[str]
     data: Optional[YoutubeDownloadData]
 
 
 class YoutubeDownload(BaseModel):
-    """входящий запрос на скачивание видео"""
+    """Входящий запрос на скачивание видео"""
 
     y_id: str
     format: str

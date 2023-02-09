@@ -1,4 +1,4 @@
-"""Сервисный слой - логика работы эндпоинтов"""
+"""Сервисный слой - логика работы"""
 from fastapi import BackgroundTasks
 
 import managers
@@ -8,7 +8,7 @@ from tasks import youtube_download_task
 
 
 async def youtube_info(y_id: str, video_format: str = None) -> dict:
-    """получение информации о видео"""
+    """Получение информации о видео"""
     youtube = managers.YouTube(y_id, video_format)
     result = await youtube.get_info()
     result['filtered_formats'] = youtube.filter_formats()
@@ -18,7 +18,7 @@ async def youtube_info(y_id: str, video_format: str = None) -> dict:
 
 
 async def youtube_download(y_id: str, video_format: str, background_tasks: BackgroundTasks) -> tuple:
-    """скачивание видео"""
+    """Скачивание видео"""
     youtube = managers.YouTube(y_id, video_format)
     status, url = await youtube.check_status()
     if not url and status is None:
@@ -31,3 +31,9 @@ async def social_post(social_model: serializers.Social) -> str:
     service: social.Service = getattr(social, social_model.service)()
     service = social.Logger(service)
     return await service.post_message(social_model.message, social_model.data)
+
+
+async def inform_post(data: serializers.Inform) -> str:
+    """Отправка уведомления"""
+    obj = managers.Inform(data)
+    return await obj.inform()

@@ -2,6 +2,7 @@
 import os
 from typing import Optional, Tuple
 
+import serializers
 from exceptions import YouTubeDownloadError
 import settings
 import models
@@ -63,3 +64,11 @@ class YouTube:
 
         formats = {f['format_id']: [f['format_note']] for f in self.video['formats'] if criteria(f)}
         return formats
+
+
+class Inform:
+
+    def __init__(self, data: serializers.Inform):
+        self.data = data
+
+

@@ -10,7 +10,7 @@ api_router = APIRouter()
 
 @api_router.get("/youtube/", response_model=serializers.YoutubeData)
 async def youtube_get(y_id: str, video_format: str = None):
-    """получение данных о видео YouTube"""
+    """Получение данных о видео YouTube"""
     try:
         all_data = await services.youtube_info(y_id, video_format)
     except YouTubeDownloadError as exc:
@@ -20,7 +20,7 @@ async def youtube_get(y_id: str, video_format: str = None):
 
 @api_router.post("/youtube/", response_model=serializers.YoutubeDownloadData)
 async def youtube_post(request: serializers.YoutubeDownload, background_tasks: BackgroundTasks):
-    """скачивание видео с YouTube"""
+    """Скачивание видео с YouTube"""
     try:
         status, url = await services.youtube_download(request.y_id, request.format, background_tasks)
     except YouTubeDownloadError as exc:
@@ -30,10 +30,21 @@ async def youtube_post(request: serializers.YoutubeDownload, background_tasks: B
 
 @api_router.post("/social", response_model=serializers.SocialResult)
 async def social_post(request: serializers.Social):
-    """отправка сообщения в соцсеть"""
+    """Отправка сообщения в соцсеть"""
     try:
         assert request.message.text or request.message.pict, "Message can't be empty"
         result = await services.social_post(request)
+    except (AuthError, UrlError, AssertionError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return serializers.SocialResult(result=result)
+
+
+@api_router.post("/inform", response_model=serializers.SocialResult)
+async def inform_post(request: serializers.Inform):
+    """Отправка сообщения в соцсеть"""
+    try:
+        assert request.message, "Message can't be empty"
+        result = await services.inform_post(request)
     except (AuthError, UrlError, AssertionError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.SocialResult(result=result)
