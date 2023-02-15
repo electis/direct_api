@@ -2,6 +2,7 @@
 import os
 from typing import Optional, Tuple
 
+import httpx
 import serializers
 from exceptions import YouTubeDownloadError
 import settings
@@ -68,7 +69,24 @@ class YouTube:
 
 class Inform:
 
-    def __init__(self, data: serializers.Inform):
+    def __init__(self, data: serializers.Inform, additional: dict = None):
         self.data = data
+        self.additional = additional or dict()
 
+    @staticmethod
+    async def send_tg(text):
+        url = f"https://api.telegram.org/bot{settings.INFORM_TG_TOKEN}/sendMessage" \
+              f"?chat_id={settings.INFORM_TG_ID}&parse_mode=Markdown&text={text}"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            return response.text
 
+    async def inform(self):
+        if settings.INFORM_TG_TOKEN and settings.INFORM_TG_ID:
+            text = "direct_api /inform\n"
+            for key, value in self.additional.items():
+                text += f"{key}: {value}\n"
+            text += f"Имя: {self.data.name}\n" \
+                    f"Контакт: {self.data.contact}\n" \
+                    f"Сообщение: {self.data.text}"
+            await self.send_tg(text)

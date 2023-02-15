@@ -1,5 +1,7 @@
 """эндпоинты проекта"""
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from urllib.parse import parse_qs
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from exceptions import YouTubeDownloadError, AuthError, UrlError
 import serializers
@@ -40,11 +42,14 @@ async def social_post(request: serializers.Social):
 
 
 @api_router.post("/inform", response_model=serializers.SocialResult)
-async def inform_post(request: serializers.Inform):
-    """Отправка сообщения в соцсеть"""
+async def inform_post(request: Request):
+    """Отправка уведомления (для форм обратной связи)"""
     try:
-        assert request.message, "Message can't be empty"
-        result = await services.inform_post(request)
-    except (AuthError, UrlError, AssertionError) as exc:
+        body = await request.body()
+        body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
+        data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
+        additional = dict(ip=request.client.host)
+        result = await services.inform_post(data, additional)
+    except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.SocialResult(result=result)

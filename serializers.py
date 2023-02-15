@@ -47,9 +47,9 @@ class SocialResult(BaseModel):
 class Inform(BaseModel):
     """Входящее уведомление"""
 
-    from_name: Optional[str]
-    from_contact: Optional[str]
-    message: Optional[str]
+    name: str
+    contact: str
+    text: str
 
 
 class YoutubeData(BaseModel):

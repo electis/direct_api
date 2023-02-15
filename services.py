@@ -33,7 +33,7 @@ async def social_post(social_model: serializers.Social) -> str:
     return await service.post_message(social_model.message, social_model.data)
 
 
-async def inform_post(data: serializers.Inform) -> str:
+async def inform_post(data: serializers.Inform, additional) -> str:
     """Отправка уведомления"""
-    obj = managers.Inform(data)
+    obj = managers.Inform(data, additional)
     return await obj.inform()
