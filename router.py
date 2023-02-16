@@ -47,9 +47,9 @@ async def inform_post(request: Request):
     try:
         body = await request.body()
         body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
-        data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
+        # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
         additional = dict(ip=request.client.host)
-        result = await services.inform_post(data, additional)
+        result = await services.inform_post(body, additional)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return serializers.SocialResult(result=result)

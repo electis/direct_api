@@ -69,7 +69,7 @@ class YouTube:
 
 class Inform:
 
-    def __init__(self, data: serializers.Inform, additional: dict = None):
+    def __init__(self, data: dict, additional: dict = None):
         self.data = data
         self.additional = additional or dict()
 
@@ -83,10 +83,10 @@ class Inform:
 
     async def inform(self):
         if settings.INFORM_TG_TOKEN and settings.INFORM_TG_ID:
-            text = "direct_api /inform\n"
+            text = "* direct_api /inform\n"
             for key, value in self.additional.items():
                 text += f"{key}: {value}\n"
-            text += f"Имя: {self.data.name}\n" \
-                    f"Контакт: {self.data.contact}\n" \
-                    f"Сообщение: {self.data.text}"
+            text += "* data\n"
+            for key, value in self.data.items():
+                text += f"{key}: {value}\n"
             await self.send_tg(text)
