@@ -2,6 +2,8 @@
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from starlette import status
+from starlette.responses import RedirectResponse
 
 from exceptions import YouTubeDownloadError, AuthError, UrlError
 import serializers
@@ -50,21 +52,27 @@ async def inform_post(request: Request):
         body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
         # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
         additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
-        result = await services.inform_post(body, additional)
+        await services.inform_post(body, additional)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return serializers.SocialResult(result=result)
+        print(exc)
+        # raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return serializers.SocialResult(result='OK')
 
 
 @clean_router.post("/info", response_model=serializers.SocialResult)
 async def info_post(request: Request):
-    """Отправка уведомления (для форм обратной связи без js)"""
+    """
+    Отправка уведомления (для форм обратной связи без js)
+    <form method="POST" action="https://direct.electis.ru/info">
+    <input type="hidden" id="tg_id" name="tg_id" value="1234567" />
+    <input type="hidden" id="redirect" name="redirect" value="/contacts" />
+    """
+    body = await request.body()
+    body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
+    additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
     try:
-        body = await request.body()
-        body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
-        # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
-        additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
-        result = await services.inform_post(body, additional)
+        await services.inform_post(body, additional)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return serializers.SocialResult(result=result)
+        print(exc)
+    redirect_url = body.get('redirect', request.headers.get('origin'))
+    return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
