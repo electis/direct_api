@@ -49,7 +49,7 @@ async def inform_post(request: Request):
         body = await request.body()
         body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
         # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
-        additional = dict(path='/inform', ip=request.client.host, origin=request.headers.get('origin'))
+        additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
         result = await services.inform_post(body, additional)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -63,7 +63,7 @@ async def info_post(request: Request):
         body = await request.body()
         body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
         # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
-        additional = dict(path='/info', ip=request.client.host, origin=request.headers.get('origin'))
+        additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
         result = await services.inform_post(body, additional)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

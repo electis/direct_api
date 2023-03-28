@@ -85,10 +85,10 @@ class Inform:
 
     async def inform(self):
         if settings.INFORM_TG_TOKEN and self.tg_id:
-            text = "** direct\n"
+            text = "-- direct\n"
             for key, value in self.additional.items():
                 text += f"{key}: {value}\n"
-            text += "** data\n"
+            text += "-- data\n"
             for key, value in self.data.items():
                 text += f"{key}: {value}\n"
             await self.send_tg(text, self.tg_id)
