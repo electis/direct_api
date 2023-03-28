@@ -72,21 +72,23 @@ class Inform:
     def __init__(self, data: dict, additional: dict = None):
         self.data = data
         self.additional = additional or dict()
+        self.tg_id = self.data.get('tg_id', settings.INFORM_TG_ID)
 
     @staticmethod
-    async def send_tg(text):
+    async def send_tg(text, tg_id=None):
+        tg_id = tg_id or settings.INFORM_TG_ID
         url = f"https://api.telegram.org/bot{settings.INFORM_TG_TOKEN}/sendMessage" \
-              f"?chat_id={settings.INFORM_TG_ID}&parse_mode=Markdown&text={text}"
+              f"?chat_id={tg_id}&parse_mode=Markdown&text={text}"
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
             return response.text
 
     async def inform(self):
-        if settings.INFORM_TG_TOKEN and settings.INFORM_TG_ID:
-            text = "* direct_api /inform\n"
+        if settings.INFORM_TG_TOKEN and self.tg_id:
+            text = "** direct\n"
             for key, value in self.additional.items():
                 text += f"{key}: {value}\n"
-            text += "* data\n"
+            text += "** data\n"
             for key, value in self.data.items():
                 text += f"{key}: {value}\n"
-            await self.send_tg(text)
+            await self.send_tg(text, self.tg_id)

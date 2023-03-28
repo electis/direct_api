@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 import settings
-from router import api_router
+from router import api_router, clean_router
 from models import DB
 
 app = FastAPI()
@@ -31,6 +31,7 @@ async def auth(token: str = Depends(oauth2_scheme)):
 
 
 app.include_router(api_router, dependencies=[Depends(auth)])
+app.include_router(clean_router)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import serializers
 import services
 
 api_router = APIRouter()
+clean_router = APIRouter()
 
 
 @api_router.get("/youtube/", response_model=serializers.YoutubeData)
@@ -43,12 +44,26 @@ async def social_post(request: serializers.Social):
 
 @api_router.post("/inform", response_model=serializers.SocialResult)
 async def inform_post(request: Request):
-    """Отправка уведомления (для форм обратной связи)"""
+    """Отправка уведомления (для форм обратной связи с js)"""
     try:
         body = await request.body()
         body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
         # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
-        additional = dict(ip=request.client.host)
+        additional = dict(path='/inform', ip=request.client.host, origin=request.headers.get('origin'))
+        result = await services.inform_post(body, additional)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return serializers.SocialResult(result=result)
+
+
+@clean_router.post("/info", response_model=serializers.SocialResult)
+async def info_post(request: Request):
+    """Отправка уведомления (для форм обратной связи без js)"""
+    try:
+        body = await request.body()
+        body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
+        # data = serializers.Inform(**{field: body.get(field) for field in serializers.Inform.__fields__.keys()})
+        additional = dict(path='/info', ip=request.client.host, origin=request.headers.get('origin'))
         result = await services.inform_post(body, additional)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
