@@ -2,7 +2,6 @@
 import os
 
 from dotenv import load_dotenv
-import dj_email_url
 from fastapi_mail import ConnectionConfig
 
 load_dotenv()
