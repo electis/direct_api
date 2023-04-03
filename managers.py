@@ -2,8 +2,8 @@
 import os
 from typing import Optional, Tuple
 
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 import httpx
-import serializers
 from exceptions import YouTubeDownloadError
 import settings
 import models
@@ -72,7 +72,8 @@ class Inform:
     def __init__(self, data: dict, additional: dict = None):
         self.data = data
         self.additional = additional or dict()
-        self.tg_id = self.data.get('tg_id', settings.INFORM_TG_ID)
+        self.telegram = self.data.get('_telegram', settings.INFORM_TG_ID)
+        self.email = self.data.get('_email')
 
     @staticmethod
     async def send_tg(text, tg_id=None):
@@ -83,12 +84,34 @@ class Inform:
             response = await client.get(url)
             return response.text
 
+    @staticmethod
+    async def send_email(text, email):
+        conf = settings.MAIL_CONFIG
+        message = MessageSchema(
+            subject="Info",
+            recipients=[email],
+            body=text,
+            subtype=MessageType.plain
+        )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+
     async def inform(self):
-        if settings.INFORM_TG_TOKEN and self.tg_id:
-            text = "-- direct\n"
-            for key, value in self.additional.items():
+        text = "-- direct\n"
+        for key, value in self.additional.items():
+            text += f"{key}: {value}\n"
+        text += "-- data\n"
+        for key, value in self.data.items():
+            if not key.startswith('_'):
                 text += f"{key}: {value}\n"
-            text += "-- data\n"
-            for key, value in self.data.items():
-                text += f"{key}: {value}\n"
-            await self.send_tg(text, self.tg_id)
+
+        if settings.INFORM_TG_TOKEN and self.telegram:
+            try:
+                await self.send_tg(text, self.telegram)
+            except Exception as exc:
+                print(exc)
+        if self.email:
+            try:
+                await self.send_email(text, self.email)
+            except Exception as exc:
+                print(exc)

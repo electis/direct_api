@@ -1,4 +1,5 @@
 """эндпоинты проекта"""
+import os.path
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
@@ -60,19 +61,21 @@ async def inform_post(request: Request):
 
 
 @clean_router.post("/info", response_model=serializers.SocialResult)
-async def info_post(request: Request):
+async def info_post(request: Request, background_tasks: BackgroundTasks):
     """
     Отправка уведомления (для форм обратной связи без js)
     <form method="POST" action="https://direct.electis.ru/info">
-    <input type="hidden" id="tg_id" name="tg_id" value="1234567" />
-    <input type="hidden" id="redirect" name="redirect" value="/contacts" />
+    <input type="hidden" id="_telegram" name="_telegram" value="1234567" />
+    <input type="hidden" id="_email" name="_email" value="qwe@asd.ru" />
+    <input type="hidden" id="_redirect" name="_redirect" value="/contacts" />
     """
     body = await request.body()
     body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
-    additional = dict(ip=request.client.host, origin=request.headers.get('origin'))
-    try:
-        await services.inform_post(body, additional)
-    except Exception as exc:
-        print(exc)
-    redirect_url = body.get('redirect', request.headers.get('origin'))
+    origin = request.headers.get('origin', '')
+    additional = dict(ip=request.client.host, origin=origin)
+    await services.inform_post(body, additional)
+    # background_tasks.add_task(services.inform_post, body, additional)
+    redirect_url = body.get('_redirect', '')
+    if not redirect_url.startswith('http'):
+        redirect_url = os.path.join(origin, redirect_url)
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
