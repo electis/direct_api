@@ -3,7 +3,9 @@ from fastapi import BackgroundTasks
 
 import managers
 import serializers
+import settings
 import social
+from helpers import logger
 from tasks import youtube_download_task
 
 
@@ -33,6 +35,7 @@ async def social_post(social_model: serializers.Social) -> str:
     return await service.post_message(social_model.message, social_model.data)
 
 
+@logger(debug=settings.DEBUG)
 async def inform_post(data: dict, additional) -> str:
     """Отправка уведомления"""
     obj = managers.Inform(data, additional)

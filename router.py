@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from starlette import status
 from starlette.responses import RedirectResponse
 
+import settings
 from exceptions import YouTubeDownloadError, AuthError, UrlError
 import serializers
 import services
@@ -78,4 +79,5 @@ async def info_post(request: Request, background_tasks: BackgroundTasks):
     redirect_url = body.get('_redirect', '')
     if not redirect_url.startswith('http'):
         redirect_url = os.path.join(origin, redirect_url)
+    print(f"Redirect to {redirect_url}")
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)

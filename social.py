@@ -9,6 +9,7 @@ from typing import Union
 import requests
 import vk_api
 
+import settings
 from exceptions import AuthError, UrlError, PostError
 from helpers import logger
 from serializers import Message, VKData, OKData
@@ -68,7 +69,7 @@ class Logger(Service):
     async def get_auth(self, data: Union[VKData, OKData], msg: dict) -> dict:
         return await self._obj.get_auth(data, msg)
 
-    @logger(debug=True)
+    @logger(debug=settings.DEBUG)
     async def post(self, msg: dict, auth: dict) -> str:
         return await self._obj.post(msg, auth)
 

@@ -1,4 +1,4 @@
-"""основные настройки проекта, берутся из .env файла или из переменных окружения"""
+"""Основные настройки проекта, берутся из .env файла или из переменных окружения"""
 import os
 
 from dotenv import load_dotenv
@@ -9,10 +9,12 @@ load_dotenv()
 PORT = int(os.getenv('PORT', '8000'))
 HOST = os.getenv('HOST', '0.0.0.0')
 
+SECRET_TOKEN = os.getenv('SECRET_TOKEN', 'very_secret_token')
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'dev')
-SECRET_TOKEN = os.getenv('SECRET_TOKEN', 'not_secure')
+DEBUG = True
 if ENVIRONMENT == 'production':
-    assert SECRET_TOKEN != 'not_secure', 'Token not secure'
+    assert SECRET_TOKEN != 'very_secret_token', 'Token not secure'
+    DEBUG = False
 
 REDIS = os.getenv('REDIS', 'redis://localhost:6379/1')
 

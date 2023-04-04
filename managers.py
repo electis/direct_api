@@ -2,7 +2,7 @@
 import os
 from typing import Optional, Tuple
 
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi_mail import FastMail, MessageSchema, MessageType
 import httpx
 from exceptions import YouTubeDownloadError
 import settings

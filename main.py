@@ -1,5 +1,6 @@
 """Запускает сервер FastAPI"""
 from uvicorn import run
+from uvicorn.config import LOGGING_CONFIG
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +17,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+LOGGING_CONFIG["formatters"]["default"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+# LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s [%(name)s] %(levelprefix)s %(message)s"
+# LOGGING_CONFIG["formatters"]["access"]["fmt"] = \
+#     '%(asctime)s [%(name)s] %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
