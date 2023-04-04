@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from fastapi_mail import ConnectionConfig
 
-load_dotenv()
+load_dotenv(override=True)
 
 PORT = int(os.getenv('PORT', '8000'))
 HOST = os.getenv('HOST', '0.0.0.0')

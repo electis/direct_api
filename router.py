@@ -74,10 +74,14 @@ async def info_post(request: Request, background_tasks: BackgroundTasks):
     body = {key: value[0] for key, value in parse_qs(body.decode()).items()}
     origin = request.headers.get('origin', '')
     additional = dict(ip=request.client.host, origin=origin)
-    # await services.inform_post(body, additional)
-    background_tasks.add_task(services.inform_post, body, additional)
+    if settings.DEBUG:
+        await services.inform_post(body, additional)
+    else:
+        background_tasks.add_task(services.inform_post, body, additional)
     redirect_url = body.get('_redirect', '')
     if not redirect_url.startswith('http'):
+        if redirect_url.startswith('/'):
+            redirect_url = redirect_url[1:]
         redirect_url = os.path.join(origin, redirect_url)
     print(f"Redirect to {redirect_url}")
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
